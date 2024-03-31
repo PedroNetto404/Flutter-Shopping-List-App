@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/contants/routes.dart';
-import 'package:mobile_shopping_list_app/screens/forgot_password_screen.dart';
-import 'package:mobile_shopping_list_app/screens/home_screen.dart';
-import 'package:mobile_shopping_list_app/screens/login_screen.dart';
-import 'package:mobile_shopping_list_app/screens/register_screen.dart';
+import 'contants/routes.dart';
+import 'custom-theme.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/forgot_password_screen.dart';
+import 'screens/register_screen.dart';
+import 'screens/shopping-list-details.dart';
+import 'screens/shopping-list-screen.dart';
 
 void main() => runApp(const MainApp());
 
@@ -13,13 +16,15 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: HomeScreen(),
-      routes: {
-        Routes.shoppingList: (context) => HomeScreen(),
-        Routes.login: (context) => LoginScreen(),
-        Routes.forgotPassword: (context) => ForgotPasswordScreen(),
-        Routes.register: (context) => RegisterScreen(),
-      }, 
-    );
+        home: HomeScreen(),
+        routes: {
+          Routes.home: (context) => HomeScreen(),
+          Routes.login: (context) => LoginScreen(),
+          Routes.forgotPassword: (context) => const ForgotPasswordScreen(),
+          Routes.register: (context) => RegisterScreen(),
+          Routes.shoppingList: (context) => ShoppingListScreen(),
+          Routes.shoppingListDetails: (context) => ShoppingListDetails(),
+        },
+        theme: CustomTheme.theme);
   }
 }

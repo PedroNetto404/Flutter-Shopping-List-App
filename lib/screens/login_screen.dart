@@ -7,78 +7,80 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Row(
-            children: [
-              Icon(Icons.shopping_cart, color: Colors.white, size: 30),
-              SizedBox(width: 10),
-              Text(
-                'Listify',
-                style: TextStyle(color: Colors.white),
-              )
-            ],
-          ),
-          iconTheme: const IconThemeData(color: Colors.white),
-          backgroundColor: const Color.fromRGBO(206, 83, 83, 1),
-        ),
-        body: Container(
-          decoration: const BoxDecoration(color: Color.fromRGBO(50, 50, 50, 1)),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'Entre com suas credenciais',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: TextField(
-                    style: TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                        labelText: 'E-mail',
-                        border: OutlineInputBorder(),
-                        labelStyle: TextStyle(color: Colors.white)),
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: TextField(
-                    style: TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      labelText: 'Senha',
-                      labelStyle: TextStyle(color: Colors.white),
-                      border: OutlineInputBorder(),
-                    ),
-                    obscureText: true,
-                  ),
-                ),
-                Container(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                        onPressed: () => {
-                              Navigator.pushNamed(
-                                  context, Routes.forgotPassword)
-                            },
-                        child: const Text('Esqueceu a senha?'))),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromRGBO(206, 83, 83, 1),
-                    foregroundColor: Colors.black,
-                  ),
-                  child: const Text('Entrar'),
-                ),
-              ],
+      appBar: AppBar(
+        title: const Text('Login'),
+        centerTitle: true
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Entre com suas credenciais',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-        ));
+            const SizedBox(height: 16),
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: TextField(
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                    labelText: 'E-mail',
+                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(color: Colors.white)),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: TextField(
+                style: TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  labelText: 'Senha',
+                  labelStyle: TextStyle(color: Colors.white),
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, Routes.register);
+                          },
+                          child: const Text(
+                              'Não possui uma conta? Crie uma agora!')),
+                      TextButton(
+                          onPressed: () {
+                            Navigator.pushNamed(context, Routes.forgotPassword);
+                          },
+                          child: const Text('Esqueceu sua senha?'))
+                    ]),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, Routes.shoppingList);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromRGBO(206, 83, 83, 1),
+                foregroundColor: Colors.black,
+              ),
+              child: const Text('Entrar'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
