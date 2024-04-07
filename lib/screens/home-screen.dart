@@ -1,5 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_shopping_list_app/contants/routes.dart';
+import 'package:mobile_shopping_list_app/screens/shopping-list-screen.dart';
+import 'package:mobile_shopping_list_app/widgets/primary-button.dart';
+import '../services/auth-service.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+        stream: AuthService().authStateChanges,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return _progressIndicator();
+          }
+
+          if (snapshot.hasData) {
+            return const ShoppingListScreen();
+          }
+
+          return Scaffold(
+            body: Column(
+              children: [
+                Expanded(flex: 4, child: _HomeTopSection()),
+                Expanded(flex: 6, child: _HomeBottomSection()),
+              ],
+            ),
+          );
+        });
+  }
+
+  Widget _progressIndicator() {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+}
 
 class _HomeTopSection extends StatelessWidget {
   @override
@@ -89,43 +128,18 @@ class _HomeBottomSection extends StatelessWidget {
           ),
           Column(
             children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(context, Routes.login);
-                },
-                icon: const Icon(Icons.login),
-                label: const Text('Entrar'),
-                style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50)),
-              ),
+              PrimaryButton(
+                  onPressed: () => Navigator.pushNamed(context, Routes.login),
+                  text: 'Entrar',
+                  icon: const Icon(Icons.login)),
               const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(context, Routes.register);
-                },
-                icon: const Icon(Icons.person_add),
-                label: const Text('Registrar'),
-                style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50)),
-              ),
+              PrimaryButton(
+                  onPressed: () =>
+                      Navigator.pushNamed(context, Routes.register),
+                  text: 'Registrar',
+                  icon: const Icon(Icons.person_add)),
             ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          Expanded(flex: 4, child: _HomeTopSection()),
-          Expanded(flex: 6, child: _HomeBottomSection()),
         ],
       ),
     );

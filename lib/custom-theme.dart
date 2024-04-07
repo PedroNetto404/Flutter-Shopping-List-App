@@ -1,43 +1,49 @@
 import 'package:flutter/material.dart';
 
 class CustomTheme {
-  static const InputDecorationTheme _inputDecorationTheme =
-      InputDecorationTheme(
+  static const InputDecorationTheme _inputDecorationTheme = InputDecorationTheme(
     labelStyle: TextStyle(color: Colors.white),
     focusedBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Color.fromRGBO(206, 83, 83, 1)),
+      borderSide: BorderSide(color: Colors.orange), // Laranja
     ),
     enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(color: Color.fromRGBO(87, 87, 87, 0.498)),
+      borderSide: BorderSide(color: Color.fromRGBO(255, 255, 255, 1.0)), // Branco com 50% de opacidade
     ),
   );
 
-  static final ElevatedButtonThemeData _elevatedButtonTheme =
-      ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-    backgroundColor: const Color.fromRGBO(206, 83, 83, 1),
-    foregroundColor: const Color.fromARGB(255, 0, 0, 0),
-    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-  ));
+  static final ElevatedButtonThemeData _elevatedButtonTheme = ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Colors.orange, // Laranja
+      foregroundColor: Colors.black,
+      textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    ),
+  );
 
   static ThemeData get theme {
     return ThemeData(
-        iconTheme: const IconThemeData(color: Colors.white),
-        colorScheme: const ColorScheme.dark(
-          background: Color.fromRGBO(50, 50, 50, 1),
-          primary: Color.fromRGBO(206, 83, 83, 1),
-          secondary: Color.fromRGBO(87, 87, 87, 0.498),
+      iconTheme: IconThemeData(color: Colors.white),
+      colorScheme: ColorScheme.dark(
+        background: Colors.black12,
+        primary: Colors.orange, // Laranja
+        secondary: Colors.orange.withOpacity(0.5), // Laranja com 50% de opacidade
+      ),
+      elevatedButtonTheme: _elevatedButtonTheme,
+      appBarTheme: AppBarTheme(
+        titleTextStyle: TextStyle(
+          color: Colors.white,
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
         ),
-        elevatedButtonTheme: _elevatedButtonTheme,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color.fromRGBO(206, 83, 83, 1),
-          titleTextStyle: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+      ),
+      listTileTheme: ListTileThemeData(
+        textColor: Colors.white,
+        tileColor: Colors.black26,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
         ),
-        inputDecorationTheme: _inputDecorationTheme);
+      ),
+      inputDecorationTheme: _inputDecorationTheme,
+    );
   }
 }

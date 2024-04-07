@@ -6,4 +6,5 @@ class Routes {
   static const String register = '/register';
   static const String shoppingList = '/shopping-list';
   static const String shoppingListDetails = '/shopping-list-detail';
+  static const String about = '/about';
 }
