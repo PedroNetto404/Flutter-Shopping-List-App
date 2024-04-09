@@ -31,7 +31,6 @@ class LoginScreen extends StatelessWidget {
                 const Text(
                   'Entre com suas credenciais',
                   style: TextStyle(
-                    color: Colors.white,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -62,25 +61,22 @@ class LoginScreen extends StatelessWidget {
 
   void _onSignInPressed(BuildContext context) {
     if (_formKey.currentState!.validate()) {
-      // Adicionado validação do formulário
       final email = _emailController.text;
       final password = _passwordController.text;
 
       AuthService()
           .signIn(email: email, password: password)
           .then((value) => Navigator.pushNamed(context, Routes.shoppingList))
-          .catchError((_) => {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                        'Erro ao fazer login. Verifique suas credenciais e tente novamente.',
-                        style: TextStyle(color: Colors.white)),
-                    backgroundColor: Colors.red,
-                  ),
-                )
-              });
+          .catchError((_) => _showSnackBarError(context));
     }
   }
+
+  _showSnackBarError(context) => ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Erro ao fazer login. Verifique suas credenciais e tente novamente.'),
+        ),
+      );
 
   Widget _navigationSection(BuildContext context) => const Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
