@@ -26,8 +26,7 @@ class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context) => MaterialApp(
         initialRoute: Routes.home,
         routes: {
           Routes.home: (context) => const HomeScreen(),
@@ -39,6 +38,7 @@ class MainApp extends StatelessWidget {
               const ShoppingListDetailsScreen(),
           Routes.about: (context) => const AboutScreen(),
         },
-        theme: CustomTheme.theme);
-  }
+        theme: ThemeData(useMaterial3: true, colorScheme: lightColorScheme),
+        darkTheme: ThemeData(useMaterial3: true, colorScheme: darkColorScheme),
+      );
 }

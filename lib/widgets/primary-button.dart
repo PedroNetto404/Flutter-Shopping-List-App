@@ -11,7 +11,6 @@ class PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ElevatedButton(
         onPressed: onPressed,
-        style: _style(context),
         child: _body(),
       );
 
@@ -22,10 +21,5 @@ class PrimaryButton extends StatelessWidget {
           const SizedBox(width: 8),
           Text(text)
         ],
-      );
-
-  _style(context) => ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.black,
       );
 }
