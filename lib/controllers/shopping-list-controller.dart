@@ -7,10 +7,16 @@ import '../services/shopping-list-repository.dart';
 class ShoppingListController extends ChangeNotifier {
   final _shoppingListRepository = ShoppingListRepository();
   final _auth = AuthService();
-
+  ThemeMode currentTheme = ThemeMode.system;
   final List<ShoppingList> _lists = [];
-
   bool fetchingData = false;
+
+  void toggleTheme() {
+    currentTheme = currentTheme == ThemeMode.light
+        ? ThemeMode.dark
+        : ThemeMode.light;
+    notifyListeners();
+  }
 
   List<ShoppingList> get lists => _lists.toList();
 

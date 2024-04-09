@@ -3,6 +3,7 @@ import 'package:mobile_shopping_list_app/contants/routes.dart';
 import 'package:mobile_shopping_list_app/screens/shopping-list-screen.dart';
 import 'package:mobile_shopping_list_app/widgets/full-screen-progress-indicator.dart';
 import 'package:mobile_shopping_list_app/widgets/primary-button.dart';
+import 'package:mobile_shopping_list_app/widgets/theme-selector.dart';
 import '../services/auth-service.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -32,15 +33,37 @@ class HomeScreen extends StatelessWidget {
 
 class _HomeTopSection extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => Stack(
-        children: [
-          Image.asset(
-            'assets/images/shopping-list-note.jpg',
+  Widget build(BuildContext context) => Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/shopping-list-note.jpg'),
             fit: BoxFit.cover,
-            width: double.infinity,
           ),
-          const Positioned(bottom: 0, left: 0, right: 0, child: _ListfyBanner())
-        ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Align(
+              alignment: Alignment.topRight,
+              child: Container(
+                  margin: const EdgeInsets.only(top: 40, right: 20),
+                  child: const ThemeSelector()),
+            ),
+            const Align(
+                alignment: Alignment.bottomCenter, child: _ListfyBanner()),
+          ],
+        ),
+      );
+}
+
+class _ShoppingPurchaseImage extends StatelessWidget {
+  const _ShoppingPurchaseImage({super.key});
+
+  @override
+  Widget build(BuildContext context) => Image.asset(
+        'assets/images/shopping-list-note.jpg',
+        fit: BoxFit.cover,
+        width: double.infinity,
       );
 }
 
@@ -49,20 +72,24 @@ class _ListfyBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-      height: 60, decoration: _boxDecoration(context), child: _content());
+      height: 60,
+      decoration: _boxDecoration(context),
+      child: _content(context));
 
-  _content() => const Row(
+  _content(context) => Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
+            color: Theme.of(context).colorScheme.background,
             Icons.shopping_cart,
             size: 30,
           ),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Text(
             'Listify',
             style: TextStyle(
               fontSize: 24,
+              color: Theme.of(context).colorScheme.background,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -103,11 +130,11 @@ class _FunnyGifSection extends StatelessWidget {
   const _FunnyGifSection({super.key});
 
   @override
-  Widget build(BuildContext context) =>
-      Container(
+  Widget build(BuildContext context) => Container(
         decoration: BoxDecoration(
           //borda arrredondada
-          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 6),
+          border: Border.all(
+              color: Theme.of(context).colorScheme.primary, width: 6),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Image.asset('assets/images/lost_in_supermarket.gif',
@@ -120,8 +147,8 @@ class _WelcomeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text(
           'Bem-vindo a',
           style: TextStyle(
             fontSize: 32,
@@ -133,10 +160,11 @@ class _WelcomeSection extends StatelessWidget {
           style: TextStyle(
             fontSize: 36,
             fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
-        Text(
-          'Nunca mais esqueça de comprar algo no supermercado!',
+        const Text(
+          '🧠 Nunca mais esqueça de comprar algo no supermercado! 🛒',
           style: TextStyle(
             fontSize: 20,
           ),
