@@ -7,40 +7,31 @@ import '../services/shopping-list-repository.dart';
 class ShoppingListController extends ChangeNotifier {
   final _shoppingListRepository = ShoppingListRepository();
   final _auth = AuthService();
-  ThemeMode currentTheme = ThemeMode.system;
+
+  ThemeMode currentTheme = ThemeMode.dark;
+
   final List<ShoppingList> _lists = [];
-  bool fetchingData = false;
 
   void toggleTheme() {
-    currentTheme = currentTheme == ThemeMode.light
-        ? ThemeMode.dark
-        : ThemeMode.light;
+    currentTheme =
+        currentTheme == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
   }
 
   List<ShoppingList> get lists => _lists.toList();
 
   Future<void> fetchLists() async {
-    try {
-      fetchingData = true;
+    var userId = _auth.currentUser!.uid;
+    final lists = await _shoppingListRepository.getAll(userId);
 
-      var userId = _auth.currentUser.uid;
-      final lists = await _shoppingListRepository.getAll(userId);
-
-      _lists.clear();
-      _lists.addAll(lists);
-    } catch (e) {
-      print(e);
-    } finally {
-      fetchingData = false;
-      notifyListeners();
-    }
+    _lists.clear();
+    _lists.addAll(lists);
   }
 
   Future<void> addShoppingList(String name) async {
     try {
       final shoppingList =
-          ShoppingList.create(userId: _auth.currentUser.uid, name: name);
+          ShoppingList.create(userId: _auth.currentUser!.uid, name: name);
 
       await _shoppingListRepository.create(shoppingList);
       _lists.add(shoppingList);
@@ -64,7 +55,7 @@ class ShoppingListController extends ChangeNotifier {
       {required String listId,
       required String name,
       required double quantity,
-      required UnityType unityType,
+      required UnitType unityType,
       required String category,
       required String note}) async {
     try {
@@ -144,7 +135,7 @@ class ShoppingListController extends ChangeNotifier {
       {required String listId,
       required String newName,
       required double newQuantity,
-      required UnityType newUnityType,
+      required UnitType newUnityType,
       required String newCategory,
       required String newNote}) async {
     try {

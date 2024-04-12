@@ -1,7 +1,7 @@
-enum UnityType {
-  kg,
-  g,
-  l,
-  ml,
+enum UnitType {
   un,
+  g,
+  kg,
+  ml,
+  l
 }

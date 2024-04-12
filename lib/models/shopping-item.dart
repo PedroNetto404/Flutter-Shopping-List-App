@@ -2,7 +2,7 @@ import 'package:mobile_shopping_list_app/models/enums/unit-type.dart';
 
 class ShoppingItem {
   String _name;
-  UnityType unityType;
+  UnitType unityType;
   double _quantity;
   bool _purchased;
   String _category;
@@ -70,7 +70,7 @@ class ShoppingItem {
 
   ShoppingItem.fromJson(Map<String, dynamic> json)
       : _name = json['name'],
-        unityType = UnityType.values.firstWhere(
+        unityType = UnitType.values.firstWhere(
             (element) => element.toString().split('.').last == json['unity_type']),
         _quantity = json['quantity'],
         _purchased = json['purchased'],

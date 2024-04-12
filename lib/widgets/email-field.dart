@@ -12,13 +12,13 @@ class EmailField extends StatelessWidget {
         decoration: _decorate(),
         keyboardType: TextInputType.emailAddress,
         validator: _validateEmail,
-        onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+        textInputAction: TextInputAction.next,
       );
 
   _decorate() => const InputDecoration(
         prefixIcon: Icon(Icons.email),
         labelText: 'E-mail',
-        border: OutlineInputBorder(),
+        hintText: 'Digite seu e-mail'
       );
 
   String? _validateEmail(String? value) {

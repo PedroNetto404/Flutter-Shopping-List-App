@@ -1,32 +1,34 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mobile_shopping_list_app/services/storage-service.dart';
 
 class AuthService {
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+  final StorageService storageService = StorageService();
 
-  User get currentUser {
-    var currentUser = _firebaseAuth.currentUser;
-
-    if(currentUser == null) {
-      throw Exception('User not authenticated');
-    }
-
-    return currentUser;
-  }
-
-  Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
+  User? get currentUser => firebaseAuth.currentUser;
 
   Future<void> signIn(
           {required String email, required String password}) async =>
-      await _firebaseAuth.signInWithEmailAndPassword(
+      await firebaseAuth.signInWithEmailAndPassword(
           email: email, password: password);
 
   Future<void> create(
-          {required String email, required String password}) async =>
-      await _firebaseAuth.createUserWithEmailAndPassword(
+          {required String email, required String password, required String name}) async {
+    final userCredentials = await firebaseAuth.createUserWithEmailAndPassword(
           email: email, password: password);
 
-  Future<void> signOut() async => await _firebaseAuth.signOut();
+    await userCredentials.user!.updateDisplayName(name);
+  }
+
+  Future<void> signOut() async => await firebaseAuth.signOut();
 
   Future<void> sendPasswordResetEmail({required String email}) async =>
-      await _firebaseAuth.sendPasswordResetEmail(email: email);
+      await firebaseAuth.sendPasswordResetEmail(email: email);
+
+  Future<void> updateProfilePicture(File file) async {
+    var url = await storageService.uploadFile('users/${currentUser!.uid}/profile-picture', file);
+    await currentUser!.updatePhotoURL(url);
+  }
 }

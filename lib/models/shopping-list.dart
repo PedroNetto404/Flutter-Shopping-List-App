@@ -63,7 +63,7 @@ class ShoppingList {
       {required String name,
       required String category,
       required double quantity,
-      required UnityType unityType,
+      required UnitType unityType,
       String note = ''}) {
     var existingItem = _items
         .where((element) => element.name.toLowerCase() == name.toLowerCase())

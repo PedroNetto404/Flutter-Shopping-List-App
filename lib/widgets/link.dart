@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_shopping_list_app/contants/app-route.dart';
 
 class Link extends StatelessWidget {
-  final String route;
+  final AppRoute route;
   final String label;
 
   const Link({super.key, required this.route, required this.label});
@@ -15,7 +16,7 @@ class Link extends StatelessWidget {
           ),
           padding: const EdgeInsets.all(0),
         ),
-        onPressed: () => Navigator.of(context).pushNamed(route),
+        onPressed: () => AppRoute.navigateTo(context, route),
         child: Text(label),
       );
 }
