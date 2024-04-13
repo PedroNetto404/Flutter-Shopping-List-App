@@ -11,6 +11,7 @@ class ShoppingListDetailsNameField extends StatelessWidget {
         child: TextFormField(
           controller: controller,
           keyboardType: TextInputType.text,
+          textInputAction: TextInputAction.next,
           decoration: const InputDecoration(
             labelText: 'Nome',
             hintText: 'Digite o nome do item',

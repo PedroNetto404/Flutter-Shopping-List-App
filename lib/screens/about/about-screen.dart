@@ -11,18 +11,20 @@ class AboutScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Sobre'),
         ),
-        body: const Padding(
-          padding: EdgeInsets.all(20),
-          child: Center(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                AppSection(),
-                SizedBox(height: 40),
-                DeveloperSection(),
-                SizedBox(height: 40),
-                DeveloperPicture()
-              ],
+        body: const SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Center(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppSection(),
+                  SizedBox(height: 40),
+                  DeveloperSection(),
+                  SizedBox(height: 40),
+                  DeveloperPicture()
+                ],
+              ),
             ),
           ),
         ),

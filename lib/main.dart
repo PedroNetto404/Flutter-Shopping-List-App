@@ -12,14 +12,14 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(ChangeNotifierProvider(
-      create: (context) => ShoppingListController(), child: const MainApp()));
+      create: (context) => ShoppingListProvider(), child: const MainApp()));
 }
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) => Consumer<ShoppingListController>(
+  Widget build(BuildContext context) => Consumer<ShoppingListProvider>(
         builder: (context, shoppingListController, child) => MaterialApp(
             debugShowCheckedModeBanner: false,
             initialRoute: AppRoute.home.value,

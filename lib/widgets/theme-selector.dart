@@ -6,7 +6,7 @@ class ThemeSelector extends StatelessWidget {
   const ThemeSelector({super.key});
 
   @override
-  Widget build(BuildContext context)  => Consumer<ShoppingListController>(
+  Widget build(BuildContext context)  => Consumer<ShoppingListProvider>(
     builder: (context, themeController, child) => Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(

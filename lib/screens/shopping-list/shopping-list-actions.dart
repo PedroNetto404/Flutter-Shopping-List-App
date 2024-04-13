@@ -27,7 +27,7 @@ class ShoppingListActions extends StatelessWidget {
           showDialog(
               context: context,
               builder: (context) => DeleteConfirmationDialog(
-                title: 'Excluir lista de compras',
+                title: 'Excluir Lista',
                 content:
                 'Tem certeza que deseja excluir a lista de compras "${list.name}"?',
                 onConfirm: () => _onConfirmDelete(context),
@@ -44,7 +44,7 @@ class ShoppingListActions extends StatelessWidget {
   );
 
   void _onConfirmDelete(BuildContext context) {
-    var controller = context.read<ShoppingListController>();
+    var controller = context.read<ShoppingListProvider>();
     controller.removeShoppingList(list.id);
   }
 }

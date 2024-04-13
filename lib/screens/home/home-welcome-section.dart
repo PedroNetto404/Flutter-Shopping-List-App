@@ -6,25 +6,30 @@ class HomeWelcomeSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text(
-          'Bem-vindo a',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w500,
-          ),
+        Row(
+          children: [
+            const Text(
+              'Bem-vindo a',
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Listify!',
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ],
         ),
-        Text(
-          'Listify!',
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
         const Text(
-          '🧠 Nunca mais esqueça de comprar algo no supermercado! 🛒',
+          '🧠🛒 Nunca mais esqueça de comprar algo no supermercado!',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 16
           ),
         ),
       ]);

@@ -85,7 +85,7 @@ class ShoppingList {
     _items.add(item);
   }
 
-  void removeItem(int itemId) => _items.removeWhere((element) => element.id == itemId);
+  void removeItem(String itemName) => _items.removeWhere((element) => element.name == itemName);
 
   void complete() {
     for (var element in _items) {

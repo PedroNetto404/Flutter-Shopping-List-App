@@ -15,7 +15,7 @@ class ShoppingListDetailsToggleItemPurchaseLeading extends StatelessWidget {
   Widget build(BuildContext context) => Checkbox(
         value: item.purchased,
         onChanged: (value) => context
-            .read<ShoppingListController>()
-            .toggleItemPurchase(listId, item.id),
+            .read<ShoppingListProvider>()
+            .toggleItemPurchase(listId, item.name),
       );
 }

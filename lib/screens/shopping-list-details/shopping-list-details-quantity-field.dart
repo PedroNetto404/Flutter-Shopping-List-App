@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_shopping_list_app/widgets/circle-button.dart';
 
 class ShoppingListDetailsQuantityField extends StatelessWidget {
   final TextEditingController controller;
@@ -7,28 +8,44 @@ class ShoppingListDetailsQuantityField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(8.0),
-    child: TextFormField(
-      controller: controller,
-      keyboardType: TextInputType.number,
-      validator: _validateQuantity,
-      decoration: InputDecoration(
-          labelText: 'Quantidade',
-          hintText: 'Digite a quantidade do item',
-          prefixIcon: const Icon(Icons.format_list_numbered),
-          suffixIcon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _circleButton(Icons.remove, Colors.red, _onDecrement),
-              _circleButton(Icons.add, Colors.green, _onIncrement),
-            ],
-          )),
-    ),
-  );
+        padding: const EdgeInsets.all(8.0),
+        child: TextFormField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
+          validator: _validateQuantity,
+          textInputAction: TextInputAction.next,
+          decoration: InputDecoration(
+              labelText: 'Quantidade',
+              hintText: 'Digite a quantidade do item',
+              prefixIcon: const Icon(Icons.format_list_numbered),
+              suffixIcon: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircleButton(
+                        icon: const Icon(Icons.remove),
+                        color: Colors.red,
+                        onPressed: _onDecrement),
+                    CircleButton(
+                        icon: const Icon(Icons.add),
+                        color: Colors.green,
+                        onPressed: _onIncrement),
+                  ],
+                ),
+              )),
+        ),
+      );
 
   String? _validateQuantity(String? value) {
     if (value == null || value.isEmpty) return 'Quantidade é obrigatória';
-    if (double.tryParse(value) == null) return 'Quantidade inválida';
+
+    final quantity = double.tryParse(value);
+    if (quantity == null) return 'Quantidade inválida';
+
+    if (quantity <= 0) return 'Quantidade deve ser maior que zero';
+
     return null;
   }
 
@@ -43,13 +60,4 @@ class ShoppingListDetailsQuantityField extends StatelessWidget {
 
     controller.text = value.toStringAsFixed(3);
   }
-
-  Widget _circleButton(IconData icon, Color color, void Function() onPressed) =>
-      IconButton(
-          icon: Icon(icon),
-          onPressed: onPressed,
-          style: ButtonStyle(
-            backgroundColor: MaterialStateProperty.all(color),
-            padding: MaterialStateProperty.all(EdgeInsets.zero),
-          ));
 }

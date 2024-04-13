@@ -4,7 +4,7 @@ import 'package:mobile_shopping_list_app/models/shopping-list.dart';
 import '../services//auth-service.dart';
 import '../services/shopping-list-repository.dart';
 
-class ShoppingListController extends ChangeNotifier {
+class ShoppingListProvider extends ChangeNotifier {
   final _shoppingListRepository = ShoppingListRepository();
   final _auth = AuthService();
 
@@ -19,6 +19,9 @@ class ShoppingListController extends ChangeNotifier {
   }
 
   List<ShoppingList> get lists => _lists.toList();
+
+  ShoppingList getList(String listId) =>
+      _lists.firstWhere((element) => element.id == listId);
 
   Future<void> fetchLists() async {
     var userId = _auth.currentUser!.uid;
@@ -77,11 +80,11 @@ class ShoppingListController extends ChangeNotifier {
 
   Future<void> removeItemFromShoppingList({
     required String listId,
-    required int itemId,
+    required String itemName,
   }) async {
     try {
       final shoppingList = _lists.firstWhere((element) => element.id == listId);
-      shoppingList.removeItem(itemId);
+      shoppingList.removeItem(itemName);
 
       await _shoppingListRepository.update(shoppingList);
 
@@ -133,6 +136,7 @@ class ShoppingListController extends ChangeNotifier {
 
   Future<void> updateShoppingItem(
       {required String listId,
+      required String previousItemName,
       required String newName,
       required double newQuantity,
       required UnitType newUnityType,
@@ -140,8 +144,8 @@ class ShoppingListController extends ChangeNotifier {
       required String newNote}) async {
     try {
       final shoppingList = _lists.firstWhere((element) => element.id == listId);
-      final item =
-          shoppingList.items.firstWhere((element) => element.name == newName);
+      final item = shoppingList.items
+          .firstWhere((element) => element.name == previousItemName);
 
       item.name = newName;
       item.quantity = newQuantity;
@@ -157,12 +161,12 @@ class ShoppingListController extends ChangeNotifier {
     }
   }
 
-  Future<void> toggleItemPurchase(String shoppingListId, int itemId) async {
+  Future<void> toggleItemPurchase(String shoppingListId, String itemName) async {
     try {
       final shoppingList =
           _lists.firstWhere((element) => element.id == shoppingListId);
       final item =
-          shoppingList.items.firstWhere((element) => element.id == itemId);
+          shoppingList.items.firstWhere((element) => element.name == itemName);
 
       if (item.purchased) {
         item.unPurchase();

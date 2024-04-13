@@ -33,51 +33,48 @@ class _ShoppingListUserProfileInfoState extends State<ShoppingListUserProfileInf
         ),
       ),
     ),
-    child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          CircleAvatar(
-            maxRadius: MediaQuery.of(context).size.width * 0.15,
-            minRadius: MediaQuery.of(context).size.width * 0.15,
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        Container(
+          width: MediaQuery.of(context).size.width * 0.2,
+          height: MediaQuery.of(context).size.width * 0.2,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Theme.of(context).colorScheme.secondary,
+              width: 2,
+            ),
+          ),
+          child: CircleAvatar(
             backgroundColor: Theme.of(context).colorScheme.primary,
             backgroundImage:
             _currentImage != null ? NetworkImage(_currentImage!) : null,
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.secondary,
-                  width: 2,
-                ),
-              ),
-              child: Center(
-                  child: _currentImage == null
-                      ? IconButton(
-                      icon: const Icon(Icons.person_add, size: 30),
-                      onPressed: () => _goToTakePictureScreen(context))
-                      : IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () =>
-                          _goToTakePictureScreen(context))),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
             child: Center(
-              child: Text(
-                _authService.currentUser!.displayName!,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                child: _currentImage == null
+                    ? IconButton(
+                    icon: const Icon(Icons.person_add, size: 30),
+                    onPressed: () => _goToTakePictureScreen(context))
+                    : IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () =>
+                        _goToTakePictureScreen(context))),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Center(
+            child: Text(
+              _authService.currentUser!.displayName!,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 
@@ -88,8 +85,6 @@ class _ShoppingListUserProfileInfoState extends State<ShoppingListUserProfileInf
   Future<void> _onPictureTaken(XFile xFile) async {
     await _authService.updateProfilePicture(File(xFile.path));
 
-    setState(() {
-      _currentImage = _authService.currentUser!.photoURL;
-    });
+    setState(() => _currentImage = _authService.currentUser!.photoURL);
   }
 }

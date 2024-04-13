@@ -8,12 +8,21 @@ class DeveloperSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Column(
-    children: [
-      SectionHeader(icon: Icons.developer_mode, text: 'Desenvolvido por:'),
-      InfoWithIcon(icon: Icons.person, info: 'Pedro Netto de Sousa Lima.'),
-      InfoWithIcon(icon: Icons.email, info: 'pedro.lima47@fatec.sp.gov.br'),
-      InfoWithIcon(
-          icon: Icons.school, info: 'Graduando em ADS na FATEC-RP.'),
-    ],
-  );
+        children: [
+          SectionHeader(icon: Icons.developer_mode, text: 'Desenvolvido por:'),
+          Padding(
+              padding: EdgeInsets.only(left: 20),
+              child: Column(
+                children: [
+                  InfoWithIcon(
+                      icon: Icons.person, info: 'Pedro Netto de Sousa Lima.'),
+                  InfoWithIcon(
+                      icon: Icons.email, info: 'pedro.lima47@fatec.sp.gov.br'),
+                  InfoWithIcon(
+                      icon: Icons.school,
+                      info: 'Graduando em ADS na FATEC-RP.'),
+                ],
+              ))
+        ],
+      );
 }

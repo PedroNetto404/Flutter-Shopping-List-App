@@ -20,8 +20,6 @@ class DeveloperPicture extends StatelessWidget {
       borderRadius: BorderRadius.circular(200),
       child: Image.asset(
         'assets/images/dev.jpg',
-        width: MediaQuery.of(context).size.width * 0.1,
-        height: MediaQuery.of(context).size.height * 0.4,
         fit: BoxFit.cover,
       ),
     ),

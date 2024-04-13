@@ -24,11 +24,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   @override
   void initState() {
     super.initState();
-    var controller = context.read<ShoppingListController>();
+    var controller = context.read<ShoppingListProvider>();
     _fetchingListsFuture = controller.fetchLists();
   }
 
-  List<ShoppingList> _filter(ShoppingListController controller) {
+  List<ShoppingList> _filter(ShoppingListProvider controller) {
     var filteredLists = _searchText.isEmpty
         ? controller.lists
         : controller.lists
@@ -61,7 +61,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             body: ConditionalLoading(
                 predicate: () =>
                     snapshot.connectionState == ConnectionState.waiting,
-                childBuilder: (_) => Consumer<ShoppingListController>(
+                childBuilder: (_) => Consumer<ShoppingListProvider>(
                       builder: (context, controller, child) {
                         var filteredLists = _filter(controller);
 

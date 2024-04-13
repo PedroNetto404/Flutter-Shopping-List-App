@@ -87,7 +87,8 @@ class TakePictureScreenState extends State<TakePictureScreen> {
         .takePicture()
         .then(pictureHandler)
         .then((_) => Navigator.pop(context))
-        .catchError((_) {
+        .catchError((e) {
+          print(e);
       _showErrorSnackBar(context);
     }).whenComplete(() => setState(() => _isTakingPicture = false));
 

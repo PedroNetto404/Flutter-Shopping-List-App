@@ -15,7 +15,7 @@ class ShoppingListDetailsMarkAllItemsButton extends StatelessWidget {
           Checkbox(
               value: list.completed,
               onChanged: (value) {
-                var provider = context.read<ShoppingListController>();
+                var provider = context.read<ShoppingListProvider>();
                 value!
                     ? provider.completeShoppingList(list.id)
                     : provider.resetShoppingList(list.id);

@@ -11,6 +11,7 @@ class ShoppingListDetailsCategoryField extends StatelessWidget {
         child: TextFormField(
           controller: controller,
           keyboardType: TextInputType.text,
+          textInputAction: TextInputAction.next,
           decoration: const InputDecoration(
             labelText: 'Categoria',
             hintText: 'Digite a categoria do item',

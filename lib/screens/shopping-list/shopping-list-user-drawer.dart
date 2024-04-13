@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:mobile_shopping_list_app/screens/shopping-list/shopping-list-user-profile-info.dart';
 import '../../contants/app-route.dart';
 import '../../services/auth-service.dart';
@@ -15,11 +17,15 @@ class ShoppingListUserDrawer extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.max,
           children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 30),
-              child: ShoppingListUserProfileInfo(),
+            const Expanded(
+              flex: 1,
+              child: Padding(
+                padding: EdgeInsets.only(top: 30),
+                child: ShoppingListUserProfileInfo(),
+              ),
             ),
             Expanded(
+              flex: 3,
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -27,13 +33,13 @@ class ShoppingListUserDrawer extends StatelessWidget {
                       children: [
                         ListTile(
                           leading: const Icon(Icons.info),
-                          title: Text('Sobre'),
+                          title: const Text('Sobre'),
                           onTap: () =>
                               AppRoute.navigateTo(context, AppRoute.about),
                         ),
                         ListTile(
                           leading: const Icon(Icons.exit_to_app),
-                          title: Text('Sair'),
+                          title: const Text('Sair'),
                           onTap: () => _onSignOutPressed(context),
                         ),
                       ],

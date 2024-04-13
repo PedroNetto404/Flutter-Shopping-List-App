@@ -10,19 +10,19 @@ import '../../widgets/unit-type-radios.dart';
 
 class ShoppingListDetailsItemDialog extends StatefulWidget {
   final String _listId;
-  final int? _listItemId;
+  final String? _itemName;
 
-  bool get _isEditing => _listItemId != null;
+  bool get _isEditing => _itemName != null;
 
   const ShoppingListDetailsItemDialog.createItem(
       {super.key, required String listId})
       : _listId = listId,
-        _listItemId = null;
+        _itemName = null;
 
   const ShoppingListDetailsItemDialog.updateItem(
-      {super.key, required String listId, required int listItemId})
+      {super.key, required String listId, required String itemName})
       : _listId = listId,
-        _listItemId = listItemId;
+        _itemName = itemName;
 
   @override
   ShoppingItemDialogState createState() => ShoppingItemDialogState();
@@ -30,7 +30,7 @@ class ShoppingListDetailsItemDialog extends StatefulWidget {
 
 class ShoppingItemDialogState extends State<ShoppingListDetailsItemDialog> {
   final _nameController = TextEditingController();
-  final _quantityController = TextEditingController(text: '0.000');
+  final _quantityController = TextEditingController(text: '1.000');
   final _categoryController = TextEditingController();
   final _noteController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -42,11 +42,11 @@ class ShoppingItemDialogState extends State<ShoppingListDetailsItemDialog> {
 
     if (widget._isEditing) {
       var item = context
-          .read<ShoppingListController>()
+          .read<ShoppingListProvider>()
           .lists
           .firstWhere((element) => element.id == widget._listId)
           .items
-          .firstWhere((element) => element.id == widget._listItemId);
+          .firstWhere((element) => element.name == widget._itemName);
 
       _nameController.text = item.name;
       _quantityController.text = item.quantity.toString();
@@ -94,7 +94,9 @@ class ShoppingItemDialogState extends State<ShoppingListDetailsItemDialog> {
                           onChanged: (unitType) =>
                               setState(() => _selectedUnit = unitType)),
                     ),
-                    ShoppingListDetailsNoteField(controller: _noteController)
+                    ShoppingListDetailsNoteField(
+                        controller: _noteController,
+                        saveItem: () => _onSavedPressed(context)),
                   ],
                 )),
           ),
@@ -102,11 +104,12 @@ class ShoppingItemDialogState extends State<ShoppingListDetailsItemDialog> {
       );
 
   void _onSavedPressed(BuildContext context) {
-    var controller = context.read<ShoppingListController>();
+    var controller = context.read<ShoppingListProvider>();
 
     if (widget._isEditing) {
       controller.updateShoppingItem(
         listId: widget._listId,
+        previousItemName: widget._itemName!,
         newName: _nameController.text.trim(),
         newQuantity: double.tryParse(_quantityController.text) ?? 1,
         newUnityType: _selectedUnit,

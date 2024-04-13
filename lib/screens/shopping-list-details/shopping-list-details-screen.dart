@@ -2,8 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_shopping_list_app/controllers/shopping-list-controller.dart';
 import 'package:mobile_shopping_list_app/models/shopping-list.dart';
-import 'package:mobile_shopping_list_app/screens/shopping-list-details/shopping-list-details-info-section.dart';
-import 'package:mobile_shopping_list_app/screens/shopping-list-details/shopping-list-details-item-card.dart';
+import 'package:mobile_shopping_list_app/screens/shopping-list-details/shopping-list-details-bottom-section.dart';
 import 'package:mobile_shopping_list_app/screens/shopping-list-details/shopping-list-details-top-section.dart';
 import 'package:provider/provider.dart';
 import '../../models/shopping-item.dart';
@@ -22,48 +21,58 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
   String _selectedCategory = 'Todas';
 
   @override
-  Widget build(BuildContext context) {
-    var (listItems, list) = watchAndApplyFilters(context);
+  Widget build(BuildContext context) =>
+      Consumer<ShoppingListProvider>(builder: (context, provider, child) {
+        final listId = ModalRoute.of(context)!.settings.arguments as String;
+        final list = provider.getList(listId);
+        final filteredItems = filterList(list);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('📑 Detalhes da Lista'),
-        centerTitle: true,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => showDialog(
-          context: context,
-          builder: (context) =>
-              ShoppingListDetailsItemDialog.createItem(listId: list.id),
-        ),
-        child: const Icon(Icons.add),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            ShoppingListDetailsTopSection(
-                list: list,
-                onSearchChange: _onSearchChange,
-                onCategoryChange: _onCategoryChange,
-                categories: _getCategories(list.items),
-                selectedCategory: _selectedCategory),
-            const SizedBox(height: 8),
-            _listDetailsBottomSection(list, listItems)
-          ],
-        ),
-      ),
-    );
-  }
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('📑 Detalhes da Lista'),
+            centerTitle: true,
+          ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => showDialog(
+              context: context,
+              builder: (context) =>
+                  ShoppingListDetailsItemDialog.createItem(listId: list.id),
+            ),
+            child: const Icon(Icons.add),
+          ),
+          body: list.items.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.shopping_cart, size: 100),
+                      SizedBox(height: 16),
+                      Text('Lista vazia...'),
+                    ],
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      ShoppingListDetailsTopSection(
+                          list: list,
+                          onSearchChange: _onSearchChange,
+                          onCategoryChange: _onCategoryChange,
+                          categories: _getCategories(list.items),
+                          selectedCategory: _selectedCategory),
+                      const SizedBox(height: 8),
+                      ShoppingListDetailsBottomSection(
+                          list: list, filteredItems: filteredItems),
+                    ],
+                  ),
+                ),
+        );
+      });
 
-  (List<ShoppingItem> items, ShoppingList list) watchAndApplyFilters(
-      BuildContext context) {
-    var listId = ModalRoute.of(context)!.settings.arguments as String;
-    var provider = context.watch<ShoppingListController>();
-    var list = provider.lists.firstWhere((element) => element.id == listId);
-
+  List<ShoppingItem> filterList(ShoppingList list) {
     var listItems = list.items.where((element) {
       bool pass = true;
       if (_searchText.isNotEmpty) {
@@ -81,30 +90,7 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
 
     listItems.sort((a, b) => a.purchased ? 1 : -1);
 
-    return (listItems, list);
-  }
-
-  Widget _listDetailsBottomSection(
-          ShoppingList list, List<ShoppingItem> filteredItems) =>
-      Expanded(
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ShoppingListDetailsInfoSection(list: list),
-            _listItemsSection(filteredItems, list.id),
-          ],
-        ),
-      );
-
-  Widget _listItemsSection(List<ShoppingItem> items, String listId) {
-    return Expanded(
-      child: ListView.builder(
-        itemCount: items.length,
-        itemBuilder: (context, index) =>
-            ShoppingListDetailsItemCard(listId: listId, item: items[index]),
-      ),
-    );
+    return listItems;
   }
 
   List<String> _getCategories(List<ShoppingItem> items) =>

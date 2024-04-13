@@ -15,7 +15,7 @@ class HomeScreen extends StatelessWidget {
       : const Scaffold(
           body: Column(
             children: [
-              Expanded(flex: 4, child: HomeTopSection()),
+              Expanded(flex: 3, child: HomeTopSection()),
               Expanded(flex: 6, child: HomeBottomSection()),
             ],
           ),

@@ -8,8 +8,6 @@ class ShoppingItem {
   String _category;
   String _note;
 
-  int get id => _name.hashCode;
-
   String get name => _name;
 
   set name(String value) {
@@ -61,7 +59,7 @@ class ShoppingItem {
     required this.unityType,
     required double quantity,
     required String category,
-     String note = '',
+    String note = '',
   })  : _name = name,
         _quantity = quantity,
         _purchased = false,
@@ -70,8 +68,8 @@ class ShoppingItem {
 
   ShoppingItem.fromJson(Map<String, dynamic> json)
       : _name = json['name'],
-        unityType = UnitType.values.firstWhere(
-            (element) => element.toString().split('.').last == json['unity_type']),
+        unityType = UnitType.values.firstWhere((element) =>
+            element.toString().split('.').last == json['unity_type']),
         _quantity = json['quantity'],
         _purchased = json['purchased'],
         _category = json['category'],

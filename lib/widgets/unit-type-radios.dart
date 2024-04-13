@@ -30,10 +30,8 @@ class _UnitTypeRadiosState extends State<UnitTypeRadios> {
             onChanged: _onChanged)
       ]);
 
-  void _onChanged(UnitType? unitType) {
-    setState(() {
-      _selectedUnitType = unitType!;
-      widget.onChanged(_selectedUnitType);
-    });
-  }
+  void _onChanged(UnitType? unitType) => setState(() {
+        _selectedUnitType = unitType!;
+        widget.onChanged(_selectedUnitType);
+      });
 }

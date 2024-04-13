@@ -25,7 +25,7 @@ class ShoppingListDetailsItemActionsTrailing extends StatelessWidget {
             context: context,
             builder: (context) => ShoppingListDetailsItemDialog.updateItem(
               listId: listId,
-              listItemId: item.id,
+              itemName: item.name
             ),
           );
         },
@@ -40,13 +40,13 @@ class ShoppingListDetailsItemActionsTrailing extends StatelessWidget {
       context: context,
       builder: (context) => DeleteConfirmationDialog(
         title: 'Remover item',
-        content: 'Deseja remover o item ${item.name}?',
+        content: 'Tem certeza que seja remover o item "${item.name}"?',
         onConfirm: () => _onDeleteConfirmed(context),
       ));
 
   void _onDeleteConfirmed(BuildContext context) {
-    var controller = context.read<ShoppingListController>();
-    controller.removeItemFromShoppingList(listId: listId, itemId: item.id);
+    var controller = context.read<ShoppingListProvider>();
+    controller.removeItemFromShoppingList(listId: listId, itemName: item.name);
   }
 }
 
