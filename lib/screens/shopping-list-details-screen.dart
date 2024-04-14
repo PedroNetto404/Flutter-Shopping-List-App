@@ -22,8 +22,8 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
     var listItems = list.items.where((item) {
       bool pass = true;
       if (_searchText.isNotEmpty) {
-        pass =
-            pass && item.name.toLowerCase().contains(_searchText.trim().toLowerCase());
+        pass = pass &&
+            item.name.toLowerCase().contains(_searchText.trim().toLowerCase());
       }
 
       if (_selectedCategory != 'Todas') {
@@ -52,39 +52,49 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
                     ShoppingItemDialog.createItem(listId: listId)),
             child: const Icon(Icons.add_shopping_cart_sharp)),
         body:
-            Consumer<ShoppingListProvider>(builder: (context, provider, child) {
-          final list = provider.getList(listId);
-          final filteredItems = filterList(list);
+            Selector<ShoppingListProvider, (ShoppingList, List<ShoppingItem>)>(
+          builder: (BuildContext context,
+              (ShoppingList, List<ShoppingItem>) data, Widget? child) {
+            final (list, filteredItems) = data;
 
-          return list.items.isEmpty
-              ? _emptyListMessage()
-              : Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      _topSection(list),
-                      const SizedBox(height: 8),
-                      Expanded(
-                          child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _infoSection(list),
-                          Expanded(
-                            child: ListView.builder(
-                              itemCount: filteredItems.length,
-                              itemBuilder: (context, index) => ShoppingItemCard(
-                                  listId: listId, item: filteredItems[index]),
+            return list.items.isEmpty
+                ? _emptyListMessage()
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        _topSection(list),
+                        const SizedBox(height: 8),
+                        Expanded(
+                            child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _infoSection(list),
+                            Expanded(
+                              child: ListView.builder(
+                                itemCount: filteredItems.length,
+                                itemBuilder: (context, index) =>
+                                    ShoppingItemCard(
+                                        listId: listId,
+                                        item: filteredItems[index]),
+                              ),
                             ),
-                          ),
-                        ],
-                      ))
-                    ],
-                  ),
-                );
-        }));
+                          ],
+                        ))
+                      ],
+                    ),
+                  );
+          },
+          selector: (context, provider) {
+            final list = provider.getList(listId);
+            final filteredItems = filterList(list);
+
+            return (list, filteredItems);
+          },
+        ));
   }
 
   Widget _topSection(ShoppingList list) => Card(

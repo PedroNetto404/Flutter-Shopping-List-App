@@ -21,11 +21,16 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchFuture = context
-        .read<ShoppingListProvider>()
-        .fetchLists()
-        .catchError((error) => _showFetchError(context, error));
+
+    _initFetch();
   }
+
+  void _initFetch() => _fetchFuture = Future.delayed(
+      const Duration(seconds: 3),
+      () => context
+          .read<ShoppingListProvider>()
+          .fetchLists()
+          .catchError((error) => _showFetchError(context, error)));
 
   List<ShoppingList> _filter(List<ShoppingList> lists) {
     final filteredLists = _searchText.isEmpty
@@ -53,47 +58,58 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           child: const Icon(Icons.playlist_add)),
       body: FutureBuilder(
           future: _fetchFuture,
-          builder: (context, snapshot) => Consumer<ShoppingListProvider>(
-                  builder: (context, provider, child) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return const Center(child: Text('Erro ao buscar listas'));
-                }
+          builder: (context, snapshot) =>
+              Selector<ShoppingListProvider, List<ShoppingList>>(
+                  selector: (context, provider) => provider.lists,
+                  builder: (context, lists, child) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(
+                          child: Row(
+                        children: [
+                          const Icon(Icons.error, color: Colors.red),
+                          const Text('Erro ao buscar listas...'),
+                          const SizedBox(width: 8),
+                          IconButton(
+                              icon: const Icon(Icons.refresh),
+                              onPressed: () => setState(() => _initFetch())),
+                        ],
+                      ));
+                    }
 
-                final lists = provider.lists;
-                if (lists.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.shopping_cart, size: 100),
-                        SizedBox(height: 16),
-                        Text('Nenhuma lista adicionada ainda...'),
-                      ],
-                    ),
-                  );
-                }
-
-                final filteredLists = _filter(lists);
-
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      _filterSection(),
-                      _infoSection(lists),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: filteredLists.length,
-                          itemBuilder: (context, index) =>
-                              ShoppingListCard(list: filteredLists[index]),
+                    if (lists.isEmpty) {
+                      return const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.shopping_cart, size: 100),
+                            SizedBox(height: 16),
+                            Text('Nenhuma lista adicionada ainda...'),
+                          ],
                         ),
+                      );
+                    }
+
+                    final filteredLists = _filter(lists);
+
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        children: [
+                          _filterSection(),
+                          _infoSection(lists),
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: filteredLists.length,
+                              itemBuilder: (context, index) =>
+                                  ShoppingListCard(list: filteredLists[index]),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              })));
+                    );
+                  })));
 
   void _onAddPressed(BuildContext context) => showDialog(
         context: context,

@@ -12,18 +12,19 @@ class Layout extends StatelessWidget {
   const Layout({super.key, required this.body, this.floatingActionButton});
 
   @override
-  Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
-    if (!authProvider.isAuthenticated) return const HomeScreen();
+  Widget build(BuildContext context) =>
+      Consumer<AuthProvider>(builder: (context, provider, child) {
+        if (!provider.isAuthenticated) return const HomeScreen();
 
-    return Scaffold(
-        appBar: _appBar(context),
-        body: body,
-        floatingActionButton: floatingActionButton,
-        bottomNavigationBar: _bottomNavigationBar(context));
-  }
+        return Scaffold(
+            appBar: _appBar(context, provider),
+            body: body,
+            floatingActionButton: floatingActionButton,
+            bottomNavigationBar: _bottomNavigationBar(context));
+      });
 
-  PreferredSizeWidget _appBar(BuildContext context) => AppBar(
+  PreferredSizeWidget _appBar(BuildContext context, AuthProvider provider) =>
+      AppBar(
         automaticallyImplyLeading: false,
         title: Row(
           children: [
@@ -41,10 +42,7 @@ class Layout extends StatelessWidget {
           const ThemeSelector(),
           IconButton(
               icon: const Icon(Icons.exit_to_app),
-              onPressed: () {
-                final authProvider = context.read<AuthProvider>();
-                authProvider.signOut();
-              }),
+              onPressed: () => _onSignOutPressed(context, provider)),
           const SizedBox(width: 8),
         ],
       );
@@ -95,4 +93,14 @@ class Layout extends StatelessWidget {
 
     return 2;
   }
+
+  void _onSignOutPressed(BuildContext context, AuthProvider provider) => provider
+        .signOut()
+        .then((_) => AppRoute.navigateTo(context, AppRoute.home))
+        .catchError((_) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Não foi possível sair da sua conta. Tente novamente mais tarde.'),
+          backgroundColor: Colors.redAccent));
+    });
 }

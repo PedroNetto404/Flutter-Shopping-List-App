@@ -6,8 +6,8 @@ class ThemeSelector extends StatelessWidget {
   const ThemeSelector({super.key});
 
   @override
-  Widget build(BuildContext context) => Consumer<ThemeProvider>(
-        builder: (context, themeProvider, child) => Container(
+  Widget build(BuildContext context) => Selector<ThemeProvider, ThemeMode>(
+        builder: (context, themeMode, child) => Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.background,
@@ -15,14 +15,15 @@ class ThemeSelector extends StatelessWidget {
           ),
           child: IconButton(
             icon: Icon(
-                color: themeProvider.themeMode == ThemeMode.light
+                color: themeMode == ThemeMode.light
                     ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).colorScheme.secondary,
-                themeProvider.themeMode == ThemeMode.light
+                themeMode == ThemeMode.light
                     ? Icons.dark_mode
                     : Icons.light_mode),
-            onPressed: () => themeProvider.toggleTheme(),
+            onPressed: () => context.read<ThemeProvider>().toggleTheme(),
           ),
         ),
+        selector: (context, provider) => provider.themeMode,
       );
 }

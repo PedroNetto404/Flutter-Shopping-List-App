@@ -12,45 +12,47 @@ class ProfileScreen extends StatelessWidget {
       body: Padding(
           padding: const EdgeInsets.all(8),
           child: Column(children: [
-            _userAvatar(context),
+            _userAvatar(),
             const SizedBox(height: 16),
             const Divider(),
             const SizedBox(height: 16),
             _userInfo(context),
           ])));
 
-  Widget _userAvatar(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
+  Widget _userAvatar() => Consumer<AuthProvider>(builder:
+          (BuildContext context, AuthProvider provider, Widget? child) {
+        final pictureUrl = provider.currentUser.photoURL;
 
-    final pictureUrl = authProvider.currentUser.photoURL;
-
-    return SizedBox(
-        width: MediaQuery.of(context).size.width * 0.5,
-        height: MediaQuery.of(context).size.width * 0.5,
-        child: Container(
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(100),
-                border: Border.all(
-                    color: Theme.of(context).colorScheme.primary, width: 6)),
-            child: CircleAvatar(
-                radius: 50,
-                backgroundImage:
-                    pictureUrl != null ? NetworkImage(pictureUrl) : null,
-                backgroundColor: Colors.transparent,
-                child: Center(
-                    child: pictureUrl != null
-                        ? IconButton(
-                            onPressed: () =>
-                                _goToTakePictureScreen(context, authProvider),
-                            icon: Icon(Icons.edit,
-                                color: Theme.of(context).colorScheme.primary))
-                        : IconButton(
-                            onPressed: () =>
-                                _goToTakePictureScreen(context, authProvider),
-                            icon: Icon(Icons.person_add,
-                                color:
-                                    Theme.of(context).colorScheme.primary))))));
-  }
+        return SizedBox(
+            width: MediaQuery.of(context).size.width * 0.5,
+            height: MediaQuery.of(context).size.width * 0.5,
+            child: Container(
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(100),
+                    border: Border.all(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 6)),
+                child: CircleAvatar(
+                    radius: 50,
+                    backgroundImage:
+                        pictureUrl != null ? NetworkImage(pictureUrl) : null,
+                    backgroundColor: Colors.transparent,
+                    child: Center(
+                        child: pictureUrl != null
+                            ? IconButton(
+                                onPressed: () =>
+                                    _goToTakePictureScreen(context, provider),
+                                icon: Icon(Icons.edit,
+                                    color:
+                                        Theme.of(context).colorScheme.primary))
+                            : IconButton(
+                                onPressed: () =>
+                                    _goToTakePictureScreen(context, provider),
+                                icon: Icon(Icons.person_add,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary))))));
+      });
 
   Widget _userInfo(BuildContext context) {
     final authProvider = context.read<AuthProvider>();

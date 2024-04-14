@@ -110,7 +110,7 @@ class HomeScreen extends StatelessWidget {
       ]);
 
   Widget _listifyBanner(context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.primary,
           borderRadius: const BorderRadius.only(

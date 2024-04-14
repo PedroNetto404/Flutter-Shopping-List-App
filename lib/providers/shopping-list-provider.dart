@@ -16,8 +16,6 @@ class ShoppingListProvider extends ChangeNotifier {
       _lists.firstWhere((element) => element.id == listId);
 
   Future<void> fetchLists() async {
-    if (_lists.isNotEmpty) return;
-
     var userId = _auth.currentUser!.uid;
     final lists = await _shoppingListRepository.getAll(userId);
 
@@ -106,7 +104,7 @@ class ShoppingListProvider extends ChangeNotifier {
       required double newQuantity,
       required UnitType newUnityType,
       required String newCategory,
-      required String newNote}) async {
+      String? newNote}) async {
     final shoppingList = _lists.firstWhere((element) => element.id == listId);
     final item = shoppingList.items
         .firstWhere((element) => element.name == previousItemName);

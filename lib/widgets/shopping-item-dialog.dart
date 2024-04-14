@@ -45,7 +45,7 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
       _quantityController.text = item.quantity.toString();
       _categoryController.text = item.category;
       _selectedUnit = item.unityType;
-      _noteController.text = item.note;
+      _noteController.text = item.note ?? '';
     }
   }
 

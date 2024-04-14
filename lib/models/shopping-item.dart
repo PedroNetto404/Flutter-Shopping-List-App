@@ -6,7 +6,7 @@ class ShoppingItem {
   double _quantity;
   bool _purchased;
   String _category;
-  String _note;
+  String? note;
 
   String get name => _name;
 
@@ -44,27 +44,16 @@ class ShoppingItem {
     _category = value;
   }
 
-  String get note => _note;
-
-  set note(String value) {
-    if (value.isEmpty) {
-      throw Exception('Note cannot be empty');
-    }
-
-    _note = value;
-  }
-
   ShoppingItem.create({
     required String name,
     required this.unityType,
     required double quantity,
     required String category,
-    String note = '',
+    this.note,
   })  : _name = name,
         _quantity = quantity,
         _purchased = false,
-        _category = category,
-        _note = note;
+        _category = category;
 
   ShoppingItem.fromJson(Map<String, dynamic> json)
       : _name = json['name'],
@@ -73,14 +62,14 @@ class ShoppingItem {
         _quantity = double.parse(json['quantity'].toString()),
         _purchased = json['purchased'],
         _category = json['category'],
-        _note = json['note'];
+        note = json['note'];
 
-  Map<String, Object> toJson() => {
+  Map<String, Object?> toJson() => {
         'name': name,
         'unity_type': unityType.toString().split('.').last,
         'quantity': quantity,
         'purchased': purchased,
         'category': _category,
-        'note': _note,
+        'note': note,
       };
 }

@@ -39,7 +39,7 @@ class LoginScreen extends StatelessWidget {
                     controller: _passwordController,
                     onSubmitted: () => _onSignInPressed(context)),
                 const SizedBox(height: 16),
-                const NavigationSection(),
+                _navigationSection(),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
@@ -56,31 +56,7 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  void _onSignInPressed(BuildContext context) {
-    if (_formKey.currentState!.validate()) {
-      final email = _emailController.text;
-      final password = _passwordController.text;
-
-      context.read<AuthProvider>()
-          .signIn(email: email, password: password)
-          .then((value) => AppRoute.navigateTo(context, AppRoute.shoppingList))
-          .catchError((_) => _showSnackBarError(context));
-    }
-  }
-
-  _showSnackBarError(context) => ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Erro ao fazer login. Verifique suas credenciais e tente novamente.'),
-        ),
-      );
-}
-
-class NavigationSection extends StatelessWidget {
-  const NavigationSection({super.key});
-
-  @override
-  Widget build(BuildContext context) => const Align(
+  Widget _navigationSection() => const Align(
         alignment: Alignment.bottomLeft,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,4 +69,25 @@ class NavigationSection extends StatelessWidget {
           ],
         ),
       );
+
+  void _onSignInPressed(BuildContext context) {
+    if (_formKey.currentState!.validate()) {
+      final email = _emailController.text;
+      final password = _passwordController.text;
+
+      context
+          .read<AuthProvider>()
+          .signIn(email: email, password: password)
+          .then((_) => AppRoute.navigateTo(context, AppRoute.shoppingList))
+          .catchError((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Colors.redAccent,
+            content: Text(
+                'Erro ao fazer login. Verifique suas credenciais e tente novamente.'),
+          ),
+        );
+      });
+    }
+  }
 }
