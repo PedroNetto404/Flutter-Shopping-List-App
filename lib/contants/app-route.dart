@@ -1,13 +1,14 @@
 //define a constant values for routes
 import 'package:flutter/material.dart';
-import '../screens/about/about-screen.dart';
-import '../screens/forgot-password/forgot-password-screen.dart';
-import '../screens/home/home-screen.dart';
-import '../screens/login/login-screen.dart';
-import '../screens/register/register-screen.dart';
-import '../screens/shopping-list-details/shopping-list-details-screen.dart';
-import '../screens/shopping-list/shopping-list-screen.dart';
-import '../screens/take-picture/take-picture-screen.dart';
+import '../screens/about-screen.dart';
+import '../screens/forgot-password-screen.dart';
+import '../screens/home-screen.dart';
+import '../screens/login-screen.dart';
+import '../screens/profile-screen.dart';
+import '../screens/register-screen.dart';
+import '../screens/shopping-list-details-screen.dart';
+import '../screens/shopping-list-screen.dart';
+import '../screens/take-picture-screen.dart';
 
 class AppRoute {
   final String value;
@@ -22,6 +23,7 @@ class AppRoute {
   static const shoppingListDetails = AppRoute._('/shopping-list-detail');
   static const about = AppRoute._('/about');
   static const takePicture = AppRoute._('/take-picture');
+  static const profile = AppRoute._('/profile');
 
   static Map<String, Widget Function(BuildContext)> get routesMap => {
         home.value: (context) => HomeScreen(),
@@ -32,10 +34,11 @@ class AppRoute {
         shoppingListDetails.value: (context) =>
             const ShoppingListDetailsScreen(),
         about.value: (context) => const AboutScreen(),
-        takePicture.value: (context) => const TakePictureScreen()
+        takePicture.value: (context) => const TakePictureScreen(),
+        profile.value: (context) => const ProfileScreen(),
       };
 
   static Future<void> navigateTo(BuildContext context, AppRoute route,
           {Object? arguments}) =>
-      Navigator.of(context).pushNamed(route.value, arguments: arguments);
+      Navigator.pushNamed(context, route.value, arguments: arguments);
 }

@@ -8,7 +8,7 @@ class StorageService {
   Future<String> uploadFile(String path, File file) async {
     var ref = _storage.ref().child(path);
     var uploadTask = ref.putFile(file);
-    var snapshot = await uploadTask.whenComplete(() => null);
+    var snapshot = await uploadTask;
     return await snapshot.ref.getDownloadURL();
   }
 }

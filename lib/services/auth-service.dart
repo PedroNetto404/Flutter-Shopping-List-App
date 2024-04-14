@@ -7,7 +7,20 @@ class AuthService {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   final StorageService storageService = StorageService();
 
+  static AuthService? _instance;
+
+  AuthService._();
+
+  factory AuthService() {
+    _instance ??= AuthService._();
+    return _instance!;
+  }
+
   User? get currentUser => firebaseAuth.currentUser;
+
+  Stream<User?> get userChanges => firebaseAuth.authStateChanges();
+
+  bool get isAuthenticated => currentUser != null;
 
   Future<void> signIn(
           {required String email, required String password}) async =>
@@ -15,9 +28,11 @@ class AuthService {
           email: email, password: password);
 
   Future<void> create(
-          {required String email, required String password, required String name}) async {
+      {required String email,
+      required String password,
+      required String name}) async {
     final userCredentials = await firebaseAuth.createUserWithEmailAndPassword(
-          email: email, password: password);
+        email: email, password: password);
 
     await userCredentials.user!.updateDisplayName(name);
   }
@@ -28,7 +43,8 @@ class AuthService {
       await firebaseAuth.sendPasswordResetEmail(email: email);
 
   Future<void> updateProfilePicture(File file) async {
-    var url = await storageService.uploadFile('users/${currentUser!.uid}/profile-picture', file);
+    var url = await storageService.uploadFile(
+        'users/${currentUser!.uid}/profile-picture', file);
     await currentUser!.updatePhotoURL(url);
   }
 }

@@ -70,12 +70,12 @@ class ShoppingItem {
       : _name = json['name'],
         unityType = UnitType.values.firstWhere((element) =>
             element.toString().split('.').last == json['unity_type']),
-        _quantity = json['quantity'],
+        _quantity = double.parse(json['quantity'].toString()),
         _purchased = json['purchased'],
         _category = json['category'],
         _note = json['note'];
 
-  toJson() => {
+  Map<String, Object> toJson() => {
         'name': name,
         'unity_type': unityType.toString().split('.').last,
         'quantity': quantity,

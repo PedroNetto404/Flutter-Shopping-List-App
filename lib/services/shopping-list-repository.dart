@@ -1,8 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mobile_shopping_list_app/models/shopping-item.dart';
 import 'package:mobile_shopping_list_app/models/shopping-list.dart';
 
 class ShoppingListRepository {
+  static ShoppingListRepository? _instance;
+
+  ShoppingListRepository._();
+
+  factory ShoppingListRepository() {
+    _instance ??= ShoppingListRepository._();
+    return _instance!;
+  }
+
   final _shoppingListCollection =
       FirebaseFirestore.instance.collection('shopping_lists');
 

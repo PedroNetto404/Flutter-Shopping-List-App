@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class ConditionalLoading extends StatelessWidget {
-  const ConditionalLoading(
+class ConditionalLoadingIndicator extends StatelessWidget {
+  const ConditionalLoadingIndicator(
       {super.key, required this.predicate, required this.childBuilder});
 
   final bool Function() predicate;
