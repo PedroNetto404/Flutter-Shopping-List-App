@@ -1,51 +1,29 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/services/auth-service.dart';
-import 'package:mobile_shopping_list_app/widgets/conditional-loading.dart';
+import 'package:mobile_shopping_list_app/screens/home-screen.dart';
 import 'package:mobile_shopping_list_app/widgets/theme-selector.dart';
+import 'package:provider/provider.dart';
+import '../constants/app-route.dart';
+import '../providers/auth-provider.dart';
 
-import '../contants/app-route.dart';
-
-class Layout extends StatefulWidget {
+class Layout extends StatelessWidget {
   final Widget body;
   final Widget? floatingActionButton;
 
   const Layout({super.key, required this.body, this.floatingActionButton});
 
   @override
-  State<Layout> createState() => _LayoutState();
-}
+  Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+    if (!authProvider.isAuthenticated) return const HomeScreen();
 
-class _LayoutState extends State<Layout> {
-  Timer? _navigationTimer;
-
-  @override
-  void dispose() {
-    _navigationTimer?.cancel();
-    super.dispose();
+    return Scaffold(
+        appBar: _appBar(context),
+        body: body,
+        floatingActionButton: floatingActionButton,
+        bottomNavigationBar: _bottomNavigationBar(context));
   }
 
-  @override
-  Widget build(BuildContext context) => StreamBuilder(
-      stream: AuthService().userChanges,
-      builder: (context, snapshot) => ConditionalLoadingIndicator(
-          predicate: () => snapshot.connectionState == ConnectionState.waiting,
-          childBuilder: (context) {
-            if (!snapshot.hasData) {
-              _startNavigationTimer(context);
-              return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()));
-            }
-
-            return Scaffold(
-                appBar: _appBar(context, snapshot),
-                body: widget.body,
-                floatingActionButton: widget.floatingActionButton,
-                bottomNavigationBar: _bottomNavigationBar(context));
-          }));
-
-  PreferredSizeWidget _appBar(BuildContext context, AsyncSnapshot snapshot) =>
-      AppBar(
+  PreferredSizeWidget _appBar(BuildContext context) => AppBar(
         automaticallyImplyLeading: false,
         title: Row(
           children: [
@@ -61,15 +39,21 @@ class _LayoutState extends State<Layout> {
         ),
         actions: [
           const ThemeSelector(),
-          if (snapshot.hasData)
-            IconButton(
-                icon: const Icon(Icons.exit_to_app),
-                onPressed: () => AuthService().signOut()),
+          IconButton(
+              icon: const Icon(Icons.exit_to_app),
+              onPressed: () {
+                final authProvider = context.read<AuthProvider>();
+                authProvider.signOut();
+              }),
           const SizedBox(width: 8),
         ],
       );
 
   Widget _bottomNavigationBar(BuildContext context) => BottomNavigationBar(
+        selectedFontSize: 16,
+        selectedIconTheme: const IconThemeData(size: 40),
+        unselectedFontSize: 12,
+        unselectedIconTheme: const IconThemeData(size: 24),
         currentIndex: _getCurrentIndex(context),
         items: const [
           BottomNavigationBarItem(
@@ -92,7 +76,8 @@ class _LayoutState extends State<Layout> {
           }
 
           if (index == 1 && currentRoute != AppRoute.shoppingList.value) {
-            Navigator.pushReplacementNamed(context, AppRoute.shoppingList.value);
+            Navigator.pushReplacementNamed(
+                context, AppRoute.shoppingList.value);
             return;
           }
 
@@ -109,12 +94,5 @@ class _LayoutState extends State<Layout> {
     if (currentRoute == AppRoute.shoppingList.value) return 1;
 
     return 2;
-  }
-
-  void _startNavigationTimer(BuildContext context) {
-    if (_navigationTimer == null || !_navigationTimer!.isActive) {
-      _navigationTimer = Timer(const Duration(seconds: 2),
-          () => AppRoute.navigateTo(context, AppRoute.home));
-    }
   }
 }

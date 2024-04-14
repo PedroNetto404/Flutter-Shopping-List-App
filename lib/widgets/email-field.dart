@@ -9,16 +9,15 @@ class EmailField extends StatelessWidget {
   Widget build(BuildContext context) => TextFormField(
         enableSuggestions: true,
         controller: controller,
-        decoration: _decorate(),
+        decoration: const InputDecoration(
+            prefixIcon: Icon(Icons.email),
+            labelText: 'E-mail',
+            hintText: 'Digite seu e-mail'
+        ),
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         keyboardType: TextInputType.emailAddress,
         validator: _validateEmail,
         textInputAction: TextInputAction.next,
-      );
-
-  _decorate() => const InputDecoration(
-        prefixIcon: Icon(Icons.email),
-        labelText: 'E-mail',
-        hintText: 'Digite seu e-mail'
       );
 
   String? _validateEmail(String? value) {

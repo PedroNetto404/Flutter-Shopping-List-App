@@ -8,16 +8,17 @@ class InfoWithIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Icon(icon, size: 16),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text(info),
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Icon(icon, size: 16),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(info,
+                  style: const TextStyle(overflow: TextOverflow.ellipsis)),
+            ),
+          ],
         ),
-      ],
-    ),
-  );
+      );
 }

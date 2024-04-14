@@ -1,6 +1,7 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
-
 import '../providers/shopping-list-provider.dart';
 import '../models/shopping-item.dart';
 import 'delete-confirmation-dialog.dart';
@@ -21,18 +22,23 @@ class ShoppingItemCard extends StatelessWidget {
           leading: Checkbox(
               value: item.purchased,
               onChanged: (_) => _onTogglePurchasePressed(context)),
-          subtitle: Column(
+          subtitle: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              InfoWithIcon(
-                icon: Icons.shopping_bag,
-                info:
-                    '${item.quantity} ${item.unityType.toString().split('.').last.toUpperCase()}',
+              Expanded(
+                child: InfoWithIcon(
+                  icon: Icons.shopping_bag,
+                  info:
+                      '${item.quantity.toStringAsFixed(3)} ${item.unityType.toString().split('.').last.toUpperCase()}',
+                ),
               ),
-              InfoWithIcon(
-                icon: Icons.category,
-                info: item.category,
-              ),
+              if (item.category.isNotEmpty)
+                Expanded(
+                  child: InfoWithIcon(
+                    icon: Icons.category,
+                    info: item.category,
+                  ),
+                ),
             ],
           ),
           trailing: Row(
@@ -66,13 +72,38 @@ class ShoppingItemCard extends StatelessWidget {
   void _onEditPressed(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => ShoppingItemDialog.updateItem(
-          listId: listId, itemName: item.name),
+      builder: (context) =>
+          ShoppingItemDialog.updateItem(listId: listId, itemName: item.name),
     );
   }
 
   void _onTogglePurchasePressed(BuildContext context) {
-    var controller = context.read<ShoppingListProvider>();
-    controller.toggleItemPurchase(listId, item.name);
+    var provider = context.read<ShoppingListProvider>();
+    provider.toggleItemPurchase(listId, item.name);
+
+    if(provider.getList(listId).completed){
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.check, color: Colors.green),
+              SizedBox(width: 8),
+              Text('Lista concluída'),
+            ],
+          ),
+          content: const Text('Todos os itens foram marcados como comprados.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 }

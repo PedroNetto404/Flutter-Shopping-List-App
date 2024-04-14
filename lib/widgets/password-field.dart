@@ -5,13 +5,15 @@ class PasswordField extends StatefulWidget {
   final String customLabel;
   final String customHint;
   final void Function()? onSubmitted;
+  final String? Function(String?)? additionalValidator;
 
   const PasswordField(
       {super.key,
       required this.controller,
       this.customLabel = 'Senha',
       this.customHint = 'Digite sua senha',
-      this.onSubmitted});
+      this.onSubmitted,
+      this.additionalValidator});
 
   @override
   State<PasswordField> createState() => _PasswordFieldState();
@@ -23,24 +25,22 @@ class _PasswordFieldState extends State<PasswordField> {
   @override
   Widget build(BuildContext context) => TextFormField(
         controller: widget.controller,
-        decoration: _decorate(),
+        decoration: InputDecoration(
+          prefixIcon: const Icon(Icons.lock),
+          suffixIcon: IconButton(
+              onPressed: _toggleObscure,
+              icon:
+                  Icon(_isObscured ? Icons.visibility : Icons.visibility_off)),
+          hintText: widget.customHint,
+          labelText: widget.customLabel,
+        ),
         keyboardType: TextInputType.visiblePassword,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         obscureText: _isObscured,
         validator: _validatePassword,
         textInputAction: TextInputAction.next,
         onFieldSubmitted: (_) => widget.onSubmitted?.call(),
       );
-
-  _decorate() => InputDecoration(
-        prefixIcon: const Icon(Icons.lock),
-        suffixIcon: _suffix(),
-        hintText: widget.customHint,
-        labelText: widget.customLabel,
-      );
-
-  _suffix() => IconButton(
-      onPressed: _toggleObscure,
-      icon: Icon(_isObscured ? Icons.visibility : Icons.visibility_off));
 
   void _toggleObscure() => setState(() => _isObscured = !_isObscured);
 
@@ -53,6 +53,6 @@ class _PasswordFieldState extends State<PasswordField> {
       return 'A senha deve ter no mínimo 6 caracteres.';
     }
 
-    return null;
+    return widget.additionalValidator?.call(value);
   }
 }

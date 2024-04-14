@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../contants/app-route.dart';
+import '../constants/app-route.dart';
 import '../providers/shopping-list-provider.dart';
 import '../models/shopping-list.dart';
 import 'circle-button.dart';
@@ -16,7 +16,7 @@ class ShoppingListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card(
       child: ListTile(
-          onTap: () => _onCardTap(context),
+          onTap: () => _goToShoppingListDetails(context),
           title: Text(list.name,
               style: const TextStyle(fontWeight: FontWeight.bold)),
           leading: list.items.isNotEmpty
@@ -28,7 +28,7 @@ class ShoppingListCard extends StatelessWidget {
                   icon: Icon(Icons.add,
                       color: Theme.of(context).colorScheme.background),
                   color: Theme.of(context).colorScheme.primary,
-                  onPressed: () => _onAddItemTap(context)),
+                  onPressed: () => _goToShoppingListDetails(context)),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -72,15 +72,9 @@ class ShoppingListCard extends StatelessWidget {
               //Enter in list
               IconButton(
                   icon: const Icon(Icons.arrow_forward),
-                  onPressed: () => AppRoute.navigateTo(
-                      context, AppRoute.shoppingListDetails,
-                      arguments: list.id)),
+                  onPressed: () => _goToShoppingListDetails(context)),
             ],
           )));
-
-  void _onCardTap(BuildContext context) =>
-      AppRoute.navigateTo(context, AppRoute.shoppingListDetails,
-          arguments: list.id);
 
   void _onCheckboxTap(BuildContext context) {
     var provider = context.read<ShoppingListProvider>();
@@ -92,10 +86,9 @@ class ShoppingListCard extends StatelessWidget {
     }
   }
 
-  void _onAddItemTap(BuildContext context) =>
-      AppRoute.navigateTo(context, AppRoute.shoppingListDetails,
-          arguments: list.id);
-
   void _onConfirmDelete(BuildContext context) =>
       context.read<ShoppingListProvider>().removeShoppingList(list.id);
+
+  void _goToShoppingListDetails(BuildContext context) =>
+      AppRoute.navigateTo(context, AppRoute.shoppingListDetails, arguments: list.id);
 }

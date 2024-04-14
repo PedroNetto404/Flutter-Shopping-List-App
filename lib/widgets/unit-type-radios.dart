@@ -4,15 +4,22 @@ import '../models/enums/unit-type.dart';
 
 class UnitTypeRadios extends StatefulWidget {
   final void Function(UnitType unitType) onChanged;
+  final UnitType initialValue;
 
-  const UnitTypeRadios({super.key, required this.onChanged});
+  const UnitTypeRadios({super.key, required this.onChanged, this.initialValue = UnitType.un});
 
   @override
   State<UnitTypeRadios> createState() => _UnitTypeRadiosState();
 }
 
 class _UnitTypeRadiosState extends State<UnitTypeRadios> {
-  UnitType _selectedUnitType = UnitType.un;
+  late UnitType _selectedUnitType;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedUnitType = widget.initialValue;
+  }
 
   @override
   Widget build(BuildContext context) => Row(

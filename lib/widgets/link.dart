@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/contants/app-route.dart';
+import '../constants/app-route.dart';
 
 class Link extends StatelessWidget {
   final AppRoute route;

@@ -46,6 +46,7 @@ class ShoppingListDialog extends StatelessWidget {
                 hintText: 'Ex: Compras de terça',
                 prefixIcon: Icon(Icons.list),
               ),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               validator: (value) {
                 if (value!.isEmpty) return 'Nome da lista não pode ser vazio';
                 return null;

@@ -1,9 +1,9 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/services/auth-service.dart';
 import 'package:mobile_shopping_list_app/widgets/email-field.dart';
 import 'package:mobile_shopping_list_app/widgets/password-field.dart';
-import '../contants/app-route.dart';
+import 'package:provider/provider.dart';
+import '../constants/app-route.dart';
+import '../providers/auth-provider.dart';
 import '../widgets/link.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -22,7 +22,6 @@ class LoginScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Form(
             key: _formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -62,7 +61,7 @@ class LoginScreen extends StatelessWidget {
       final email = _emailController.text;
       final password = _passwordController.text;
 
-      AuthService()
+      context.read<AuthProvider>()
           .signIn(email: email, password: password)
           .then((value) => AppRoute.navigateTo(context, AppRoute.shoppingList))
           .catchError((_) => _showSnackBarError(context));

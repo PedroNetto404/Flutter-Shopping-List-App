@@ -6,19 +6,16 @@ import 'circle-button.dart';
 import 'unit-type-radios.dart';
 
 class ShoppingItemDialog extends StatefulWidget {
-  final String _listId;
-  final String? _itemName;
+  final String listId;
+  final String? itemName;
 
-  bool get _isEditing => _itemName != null;
+  bool get _isEditing => itemName != null;
 
-  const ShoppingItemDialog.createItem({super.key, required String listId})
-      : _listId = listId,
-        _itemName = null;
+  const ShoppingItemDialog.createItem({super.key, required this.listId})
+      : itemName = null;
 
   const ShoppingItemDialog.updateItem(
-      {super.key, required String listId, required String itemName})
-      : _listId = listId,
-        _itemName = itemName;
+      {super.key, required this.listId, required String this.itemName});
 
   @override
   ShoppingItemDialogState createState() => ShoppingItemDialogState();
@@ -40,9 +37,9 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
       var item = context
           .read<ShoppingListProvider>()
           .lists
-          .firstWhere((element) => element.id == widget._listId)
+          .firstWhere((element) => element.id == widget.listId)
           .items
-          .firstWhere((element) => element.name == widget._itemName);
+          .firstWhere((element) => element.name == widget.itemName);
 
       _nameController.text = item.name;
       _quantityController.text = item.quantity.toString();
@@ -76,7 +73,6 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
           height: 400,
           child: SingleChildScrollView(
             child: Form(
-                autovalidateMode: AutovalidateMode.onUserInteraction,
                 key: _formKey,
                 child: Column(
                   children: [
@@ -96,24 +92,27 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
 
     var controller = context.read<ShoppingListProvider>();
 
-    final future = widget._isEditing ? 
-      controller.updateShoppingItem(
-        listId: widget._listId,
-        previousItemName: widget._itemName!,
-        newName: _nameController.text.trim(),
-        newQuantity: double.tryParse(_quantityController.text) ?? 1,
-        newUnityType: _selectedUnit,
-        newCategory: _categoryController.text.trim(),
-        newNote: _noteController.text.trim(),
-      ) : 
-      controller.addItemToShoppingList(
-        listId: widget._listId,
-        name: _nameController.text.trim(),
-        quantity: double.tryParse(_quantityController.text) ?? 1,
-        unityType: _selectedUnit,
-        category: _categoryController.text.trim(),
-        note: _noteController.text.trim(),
-      );
+    final name = _nameController.text.trim();
+    final quantity = double.tryParse(_quantityController.text) ?? 1;
+    final category = _categoryController.text.trim();
+    final note = _noteController.text.trim();
+
+    final future = widget._isEditing
+        ? controller.updateShoppingItem(
+            listId: widget.listId,
+            previousItemName: widget.itemName!,
+            newName: name,
+            newQuantity: quantity,
+            newUnityType: _selectedUnit,
+            newCategory: category,
+            newNote: note)
+        : controller.addItemToShoppingList(
+            listId: widget.listId,
+            name: name,
+            quantity: quantity,
+            unityType: _selectedUnit,
+            category: category,
+            note: note);
 
     future.then((value) => Navigator.pop(context)).catchError((error) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -135,6 +134,7 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
           hintText: 'Digite o nome do item',
           prefixIcon: Icon(Icons.shopping_cart),
         ),
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         validator: (value) => value == null || value.isEmpty
             ? 'Nome do item é obrigatório'
             : null,
@@ -142,21 +142,41 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
     );
   }
 
-  Widget _categoryField() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: TextFormField(
-        controller: _categoryController,
-        keyboardType: TextInputType.text,
-        textInputAction: TextInputAction.next,
-        decoration: const InputDecoration(
-          labelText: 'Categoria',
-          hintText: 'Digite a categoria do item',
-          prefixIcon: Icon(Icons.category),
-        ),
-      ),
-    );
-  }
+  Widget _categoryField() => Selector<ShoppingListProvider, List<String>>(
+      builder: (BuildContext context, List<String> categories, Widget? child) =>
+          Autocomplete(
+              initialValue: TextEditingValue(text: _categoryController.text),
+              optionsBuilder: (textEditingValue) {
+                if (textEditingValue.text.isEmpty) return categories;
+
+                return categories
+                    .where((element) =>
+                        element.toLowerCase().contains(textEditingValue.text))
+                    .toList();
+              },
+              onSelected: (String value) => _categoryController.text = value,
+              fieldViewBuilder: (context, controller, focusNode,
+                      onFieldSubmitted) =>
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextFormField(
+                      controller: controller,
+                      onChanged: (value) => _categoryController.text = value,
+                      focusNode: focusNode,
+                      keyboardType: TextInputType.text,
+                      decoration: const InputDecoration(
+                        labelText: 'Categoria',
+                        hintText: 'Digite a categoria do item',
+                        prefixIcon: Icon(Icons.category),
+                      ),
+                    ),
+                  )),
+      selector: (context, provider) => provider.lists
+          .firstWhere((element) => element.id == widget.listId)
+          .items
+          .map((e) => e.category)
+          .toSet()
+          .toList());
 
   Widget _quantityField() {
     return Padding(
@@ -175,6 +195,7 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
 
           return null;
         },
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         textInputAction: TextInputAction.next,
         decoration: InputDecoration(
             labelText: 'Quantidade',
@@ -216,6 +237,7 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
   Widget _unitType() => Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: UnitTypeRadios(
+            initialValue: _selectedUnit,
             onChanged: (unitType) => setState(() => _selectedUnit = unitType)),
       );
 

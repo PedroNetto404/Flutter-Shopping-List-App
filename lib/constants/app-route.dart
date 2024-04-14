@@ -1,5 +1,6 @@
-//define a constant values for routes
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import '../models/shopping-list.dart';
 import '../screens/about-screen.dart';
 import '../screens/forgot-password-screen.dart';
 import '../screens/home-screen.dart';
@@ -20,25 +21,31 @@ class AppRoute {
   static const forgotPassword = AppRoute._('/forgot-password');
   static const register = AppRoute._('/register');
   static const shoppingList = AppRoute._('/shopping-list');
-  static const shoppingListDetails = AppRoute._('/shopping-list-detail');
+  static const shoppingListDetails = AppRoute._('/shopping-list-details');
   static const about = AppRoute._('/about');
   static const takePicture = AppRoute._('/take-picture');
   static const profile = AppRoute._('/profile');
 
-  static Map<String, Widget Function(BuildContext)> get routesMap => {
-        home.value: (context) => HomeScreen(),
-        login.value: (context) => LoginScreen(),
-        forgotPassword.value: (context) => const ForgotPasswordScreen(),
-        register.value: (context) => const RegisterScreen(),
-        shoppingList.value: (context) => const ShoppingListScreen(),
-        shoppingListDetails.value: (context) =>
-            const ShoppingListDetailsScreen(),
-        about.value: (context) => const AboutScreen(),
-        takePicture.value: (context) => const TakePictureScreen(),
-        profile.value: (context) => const ProfileScreen(),
-      };
+  static Map<String, Widget Function(BuildContext)> routesMap = {
+    home.value: (context) => const HomeScreen(),
+    login.value: (context) => LoginScreen(),
+    forgotPassword.value: (context) => const ForgotPasswordScreen(),
+    register.value: (context) => RegisterScreen(),
+    shoppingList.value: (context) => const ShoppingListScreen(),
+    shoppingListDetails.value: (context) => const ShoppingListDetailsScreen(),
+    about.value: (context) => const AboutScreen(),
+    profile.value: (context) => const ProfileScreen(),
+  };
 
   static Future<void> navigateTo(BuildContext context, AppRoute route,
           {Object? arguments}) =>
       Navigator.pushNamed(context, route.value, arguments: arguments);
+
+  static void navigateToTakePictureScreen(
+          BuildContext context, Future<void> Function(Uint8List) handler) =>
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  TakePictureScreen(pictureHandler: handler)));
 }

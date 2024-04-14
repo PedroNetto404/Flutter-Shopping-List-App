@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_shopping_list_app/providers/shopping-list-provider.dart';
 import 'package:mobile_shopping_list_app/models/shopping-list.dart';
-import 'package:mobile_shopping_list_app/widgets/layout.dart';
 import 'package:mobile_shopping_list_app/widgets/shopping-item-card.dart';
 import 'package:provider/provider.dart';
 import '../models/shopping-item.dart';
@@ -20,104 +19,111 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
   String _selectedCategory = 'Todas';
 
   List<ShoppingItem> filterList(ShoppingList list) {
-    var listItems = list.items.where((element) {
+    var listItems = list.items.where((item) {
       bool pass = true;
       if (_searchText.isNotEmpty) {
-        pass = pass &&
-            element.name.toLowerCase().substring(0, _searchText.length) ==
-                _searchText.toLowerCase();
+        pass =
+            pass && item.name.toLowerCase().contains(_searchText.trim().toLowerCase());
       }
 
       if (_selectedCategory != 'Todas') {
-        pass = pass && element.category == _selectedCategory;
+        pass = pass && item.category == _selectedCategory;
       }
 
       return pass;
     }).toList();
 
+    listItems.sort((a, b) => a.name.compareTo(b.name));
     listItems.sort((a, b) => a.purchased ? 1 : -1);
 
     return listItems;
   }
 
   @override
-  Widget build(BuildContext context) =>
-      Consumer<ShoppingListProvider>(builder: (context, provider, child) {
-        final listId = ModalRoute.of(context)!.settings.arguments as String;
-        final list = provider.getList(listId);
-        final filteredItems = filterList(list);
+  Widget build(BuildContext context) {
+    final listId = ModalRoute.of(context)!.settings.arguments as String;
 
-        return Scaffold(
-            appBar: AppBar(title: const Text('Detalhes da Lista')),
-            floatingActionButton: FloatingActionButton(
-                onPressed: () => showDialog(
-                    context: context,
-                    builder: (context) =>
-                        ShoppingItemDialog.createItem(listId: listId)),
-                child: const Icon(Icons.add_shopping_cart_sharp)),
-            body: list.items.isEmpty
-                ? _emptyListMessage()
-                : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        _topSection(list),
-                        const SizedBox(height: 8),
-                        Expanded(
-                            child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _infoSection(list),
-                            Expanded(
-                              child: ListView.builder(
-                                itemCount: filteredItems.length,
-                                itemBuilder: (context, index) =>
-                                    ShoppingItemCard(
-                                        listId: list.id,
-                                        item: filteredItems[index]),
-                              ),
+    return Scaffold(
+        appBar: AppBar(title: const Text('Detalhes da Lista')),
+        floatingActionButton: FloatingActionButton(
+            onPressed: () => showDialog(
+                context: context,
+                builder: (context) =>
+                    ShoppingItemDialog.createItem(listId: listId)),
+            child: const Icon(Icons.add_shopping_cart_sharp)),
+        body:
+            Consumer<ShoppingListProvider>(builder: (context, provider, child) {
+          final list = provider.getList(listId);
+          final filteredItems = filterList(list);
+
+          return list.items.isEmpty
+              ? _emptyListMessage()
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      _topSection(list),
+                      const SizedBox(height: 8),
+                      Expanded(
+                          child: Column(
+                        mainAxisSize: MainAxisSize.max,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _infoSection(list),
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: filteredItems.length,
+                              itemBuilder: (context, index) => ShoppingItemCard(
+                                  listId: listId, item: filteredItems[index]),
                             ),
-                          ],
-                        ))
-                      ],
-                    ),
-                  ));
-      });
+                          ),
+                        ],
+                      ))
+                    ],
+                  ),
+                );
+        }));
+  }
 
   Widget _topSection(ShoppingList list) => Card(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 16, left: 16),
-              child: Text(
-                "🛍️ ${list.name}",
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 16, left: 16),
+                child: Text(
+                  "🛍️ ${list.name}",
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            _searchSection(list),
-            const SizedBox(height: 8),
-            if (list.items.isNotEmpty)
-              Row(
-                children: [
-                  Checkbox(
-                      value: list.completed,
-                      onChanged: (value) =>
-                          _onMarkAllItemsChange(value!, list.id)),
-                  const SizedBox(width: 8),
-                  Text(
-                      'Marcar todos os itens como ${list.completed ? 'pendentes' : 'comprados'}'),
-                ],
-              )
-          ],
+              const SizedBox(height: 16),
+              _filterSection(list),
+              const SizedBox(height: 8),
+              if (list.items.isNotEmpty)
+                Row(
+                  children: [
+                    Checkbox(
+                        value: list.completed,
+                        onChanged: (value) =>
+                            _onMarkAllItemsChange(value!, list.id)),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                        onTap: () =>
+                            _onMarkAllItemsChange(!list.completed, list.id),
+                        child: Text(
+                            'Marcar todos os itens como ${list.completed ? 'pendentes' : 'comprados'}')),
+                  ],
+                )
+            ],
+          ),
         ),
       );
 
@@ -129,12 +135,12 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
         : provider.resetShoppingList(listId);
   }
 
-  Widget _searchSection(ShoppingList list) => Row(
+  Widget _filterSection(ShoppingList list) => Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         mainAxisSize: MainAxisSize.max,
         children: [
-          SizedBox(
-            width: MediaQuery.of(context).size.width * 0.6,
+          Expanded(
+            flex: 3,
             child: TextFormField(
               decoration: const InputDecoration(
                 hintText: 'Digite o nome do item',
@@ -144,8 +150,9 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
               onChanged: _onSearchChange,
             ),
           ),
-          SizedBox(
-            width: MediaQuery.of(context).size.width * 0.3,
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 1,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -201,8 +208,13 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
         ),
       );
 
-  List<String> _getCategories(List<ShoppingItem> items) =>
-      ['Todas', ...items.map((e) => e.category).toSet()];
+  List<String> _getCategories(List<ShoppingItem> items) => [
+        'Todas',
+        ...items
+            .map((e) => e.category)
+            .where((category) => category.isNotEmpty)
+            .toSet()
+      ];
 
   void _onCategoryChange(String? value) =>
       setState(() => _selectedCategory = value!);

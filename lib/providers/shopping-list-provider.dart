@@ -26,26 +26,18 @@ class ShoppingListProvider extends ChangeNotifier {
   }
 
   Future<void> addShoppingList(String name) async {
-    try {
-      final shoppingList =
-          ShoppingList.create(userId: _auth.currentUser!.uid, name: name);
+    final shoppingList =
+        ShoppingList.create(userId: _auth.currentUser!.uid, name: name);
 
-      await _shoppingListRepository.create(shoppingList);
-      _lists.add(shoppingList);
-      notifyListeners();
-    } catch (e) {
-      print(e);
-    }
+    await _shoppingListRepository.create(shoppingList);
+    _lists.add(shoppingList);
+    notifyListeners();
   }
 
   Future<void> removeShoppingList(String listId) async {
-    try {
-      await _shoppingListRepository.delete(listId);
-      _lists.removeWhere((element) => element.id == listId);
-      notifyListeners();
-    } catch (e) {
-      print(e);
-    }
+    await _shoppingListRepository.delete(listId);
+    _lists.removeWhere((element) => element.id == listId);
+    notifyListeners();
   }
 
   Future<void> addItemToShoppingList(
@@ -55,76 +47,56 @@ class ShoppingListProvider extends ChangeNotifier {
       required UnitType unityType,
       required String category,
       required String note}) async {
-    try {
-      final shoppingList = _lists.firstWhere((element) => element.id == listId);
-      shoppingList.addItem(
-          name: name,
-          category: category,
-          quantity: quantity,
-          unityType: unityType,
-          note: note);
+    final shoppingList = _lists.firstWhere((element) => element.id == listId);
+    shoppingList.addItem(
+        name: name,
+        category: category,
+        quantity: quantity,
+        unityType: unityType,
+        note: note);
 
-      await _shoppingListRepository.update(shoppingList);
+    await _shoppingListRepository.update(shoppingList);
 
-      notifyListeners();
-    } catch (e) {
-      print(e);
-    }
+    notifyListeners();
   }
 
   Future<void> removeItemFromShoppingList({
     required String listId,
     required String itemName,
   }) async {
-    try {
-      final shoppingList = _lists.firstWhere((element) => element.id == listId);
-      shoppingList.removeItem(itemName);
+    final shoppingList = _lists.firstWhere((element) => element.id == listId);
+    shoppingList.removeItem(itemName);
 
-      await _shoppingListRepository.update(shoppingList);
+    await _shoppingListRepository.update(shoppingList);
 
-      notifyListeners();
-    } catch (e) {
-      print(e);
-    }
+    notifyListeners();
   }
 
   Future<void> completeShoppingList(String id) async {
-    try {
-      final shoppingList = _lists.firstWhere((element) => element.id == id);
-      shoppingList.complete();
+    final shoppingList = _lists.firstWhere((element) => element.id == id);
+    shoppingList.complete();
 
-      await _shoppingListRepository.update(shoppingList);
+    await _shoppingListRepository.update(shoppingList);
 
-      notifyListeners();
-    } catch (e) {
-      print(e);
-    }
+    notifyListeners();
   }
 
   Future<void> resetShoppingList(String id) async {
-    try {
-      final shoppingList = _lists.firstWhere((element) => element.id == id);
-      shoppingList.reset();
+    final shoppingList = _lists.firstWhere((element) => element.id == id);
+    shoppingList.reset();
 
-      await _shoppingListRepository.update(shoppingList);
+    await _shoppingListRepository.update(shoppingList);
 
-      notifyListeners();
-    } catch (e) {
-      print(e);
-    }
+    notifyListeners();
   }
 
   Future<void> updateShoppingListName(String listId, String name) async {
-    try {
-      final shoppingList = _lists.firstWhere((element) => element.id == listId);
-      shoppingList.name = name;
+    final shoppingList = _lists.firstWhere((element) => element.id == listId);
+    shoppingList.name = name;
 
-      await _shoppingListRepository.update(shoppingList);
+    await _shoppingListRepository.update(shoppingList);
 
-      notifyListeners();
-    } catch (e) {
-      print(e);
-    }
+    notifyListeners();
   }
 
   Future<void> updateShoppingItem(
@@ -135,44 +107,36 @@ class ShoppingListProvider extends ChangeNotifier {
       required UnitType newUnityType,
       required String newCategory,
       required String newNote}) async {
-    try {
-      final shoppingList = _lists.firstWhere((element) => element.id == listId);
-      final item = shoppingList.items
-          .firstWhere((element) => element.name == previousItemName);
+    final shoppingList = _lists.firstWhere((element) => element.id == listId);
+    final item = shoppingList.items
+        .firstWhere((element) => element.name == previousItemName);
 
-      item.name = newName;
-      item.quantity = newQuantity;
-      item.unityType = newUnityType;
-      item.category = newCategory;
-      item.note = newNote;
+    item.name = newName;
+    item.quantity = newQuantity;
+    item.unityType = newUnityType;
+    item.category = newCategory;
+    item.note = newNote;
 
-      await _shoppingListRepository.update(shoppingList);
+    await _shoppingListRepository.update(shoppingList);
 
-      notifyListeners();
-    } catch (e) {
-      print(e);
-    }
+    notifyListeners();
   }
 
   Future<void> toggleItemPurchase(
       String shoppingListId, String itemName) async {
-    try {
-      final shoppingList =
-          _lists.firstWhere((element) => element.id == shoppingListId);
-      final item =
-          shoppingList.items.firstWhere((element) => element.name == itemName);
+    final shoppingList =
+        _lists.firstWhere((element) => element.id == shoppingListId);
+    final item =
+        shoppingList.items.firstWhere((element) => element.name == itemName);
 
-      if (item.purchased) {
-        item.unPurchase();
-      } else {
-        item.purchase();
-      }
-
-      await _shoppingListRepository.update(shoppingList);
-
-      notifyListeners();
-    } catch (e) {
-      print(e);
+    if (item.purchased) {
+      item.unPurchase();
+    } else {
+      item.purchase();
     }
+
+    await _shoppingListRepository.update(shoppingList);
+
+    notifyListeners();
   }
 }

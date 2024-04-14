@@ -1,11 +1,12 @@
-import 'dart:io';
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/widgets/conditional-loading.dart';
 import '../widgets/layout.dart';
 
 class TakePictureScreen extends StatefulWidget {
-  const TakePictureScreen({super.key});
+  final Future<void> Function(Uint8List) pictureHandler;
+
+  const TakePictureScreen({super.key, required this.pictureHandler});
 
   @override
   TakePictureScreenState createState() => TakePictureScreenState();
@@ -14,7 +15,6 @@ class TakePictureScreen extends StatefulWidget {
 class TakePictureScreenState extends State<TakePictureScreen> {
   late Future<void> _initFuture;
   final List<CameraController> _camerasControllers = [];
-  final List<CameraDescription> _cameras = [];
 
   CameraController get _currentCameraController =>
       _camerasControllers[_selectedCameraIndex];
@@ -23,16 +23,26 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   bool _takingPicture = false;
 
   @override
+  void dispose() {
+    for (var controller in _camerasControllers) {
+      controller.dispose();
+    }
+
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
 
-    _initFuture = _initCameras();
+    _initFuture =
+        _initCameras().catchError((error) => _handleError(context, error));
   }
 
   Future<void> _initCameras() async {
-    _cameras.addAll(await availableCameras());
+    final cameras = await availableCameras();
 
-    for (var camera in _cameras) {
+    for (var camera in cameras) {
       final cameraController =
           CameraController(camera, ResolutionPreset.medium);
 
@@ -43,26 +53,25 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final pictureHandler = ModalRoute.of(context)!.settings.arguments
-        as Future<void> Function(XFile);
+  Widget build(BuildContext context) => Layout(
+          body: FutureBuilder(
+        future: _initFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting || _takingPicture) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return const Center(child: Text('Erro ao inicializar a câmera'));
+          }
 
-    return Layout(
-        body: FutureBuilder(
-      future: _initFuture,
-      builder: (context, snapshot) => ConditionalLoadingIndicator(
-        predicate: () =>
-            snapshot.connectionState == ConnectionState.waiting ||
-            _takingPicture,
-        childBuilder: (context) => Column(
-          children: [
-            _header(),
-            _cameraSection(pictureHandler),
-          ],
+          return Column(
+            children: [
+              _header(),
+              _cameraSection(),
+            ],
+          );
+        },
         ),
-      ),
-    ));
-  }
+      );
 
   Widget _header() => Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -78,36 +87,39 @@ class TakePictureScreenState extends State<TakePictureScreen> {
         ),
       );
 
-  Widget _cameraSection(Future<void> Function(XFile) pictureHandler) => Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          CameraPreview(_currentCameraController,
+  Widget _cameraSection() => Expanded(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: CameraPreview(_currentCameraController,
               child: Container(
                   decoration: BoxDecoration(
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.primary,
-                  width: 4,
-                ),
-                color: Colors.transparent,
-              ))),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                if (_camerasControllers.length > 1)
-                  FloatingActionButton(
-                    onPressed: _onCameraChange,
-                    child: const Icon(Icons.switch_camera),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.primary,
+                      width: 4,
+                    ),
+                    color: Colors.transparent,
                   ),
-                FloatingActionButton(
-                  onPressed: () => _onPictureTaken(pictureHandler, context),
-                  child: const Icon(Icons.camera),
-                ),
-              ],
-            ),
-          ),
-        ],
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          if (_camerasControllers.length > 1)
+                            FloatingActionButton(
+                              onPressed: _onCameraChange,
+                              child: const Icon(Icons.switch_camera),
+                            ),
+                          FloatingActionButton(
+                            onPressed: () => _onPictureTaken(context),
+                            child: const Icon(Icons.camera),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ))),
+        ),
       );
 
   void _onCameraChange() {
@@ -117,60 +129,62 @@ class TakePictureScreenState extends State<TakePictureScreen> {
         (_selectedCameraIndex + 1) % _camerasControllers.length);
   }
 
-  void _onPictureTaken(
-      Future<void> Function(XFile) pictureHandler, BuildContext context) {
-    _takingPicture = true;
-    _currentCameraController.takePicture().then((file) {
-      if (!mounted) return;
-      _showPictureFeedbackDialog(XFile(file.path), pictureHandler, context);
-    }).catchError((error) {
-      if (!mounted) return;
-      _handleError(context, error);
-    }).whenComplete(() {
-      if (!mounted) return;
-      setState(() => _takingPicture = false);
-    });
+  void _onPictureTaken(BuildContext context) {
+    _currentCameraController
+        .takePicture()
+        .then((value) => value.readAsBytes())
+        .then((value) => _showPictureFeedbackDialog(value, context))
+        .catchError((error) => _handleError(context, error))
+        .whenComplete(_handleTakingPictureCompleted);
+
+    setState(() => _takingPicture = true);
   }
 
-  void _handleError(BuildContext context, Object error) =>
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Column(
-            children: [
-              const Text('Erro ao tirar a foto'),
-              Text(error.toString()),
-            ],
-          ),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+  void _handleTakingPictureCompleted() {
+    if (!mounted) return;
 
-  void _showPictureFeedbackDialog(XFile picture, Function(XFile) pictureHandler,
-          BuildContext context) =>
+    setState(() => _takingPicture = false);
+  }
+
+  void _handleError(BuildContext context, Object error) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          children: [
+            const Text('Erro ao tirar a foto'),
+            Text(error.toString()),
+          ],
+        ),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
+  }
+
+  void _showPictureFeedbackDialog(Uint8List picture, BuildContext context) =>
       showDialog(
           context: context,
           builder: (context) => AlertDialog(
                 title: const Text('Gostou da foto?'),
                 content: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Image.file(File(picture.path)),
+                  child: Image.memory(picture),
                 ),
                 actions: [
                   TextButton(
                       onPressed: () => Navigator.of(context).pop(),
                       child: const Text('Não')),
                   TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        Navigator.of(context).pop();
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Foto salva com sucesso!'),
-                          ),
-                        );
-                      },
+                      onPressed: () =>
+                          _onPictureConfirmedPressed(picture, context),
                       child: const Text('Sim')),
                 ],
               ));
+
+  void _onPictureConfirmedPressed(Uint8List picture, BuildContext context) =>
+      widget
+          .pictureHandler(picture)
+          .catchError((error) => _handleError(context, error))
+          .whenComplete(() => Navigator.of(context).pop());
 }

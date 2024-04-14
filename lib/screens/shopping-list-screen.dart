@@ -1,9 +1,6 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:mobile_shopping_list_app/providers/shopping-list-provider.dart';
 import 'package:mobile_shopping_list_app/widgets/shopping-list-card.dart';
-import 'package:mobile_shopping_list_app/widgets/conditional-loading.dart';
 import 'package:mobile_shopping_list_app/widgets/layout.dart';
 import 'package:provider/provider.dart';
 import '../models/shopping-list.dart';
@@ -21,19 +18,30 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   bool _dateAscending = true;
   Future<void>? _fetchFuture;
 
-  List<ShoppingList> _filter(ShoppingListProvider controller) {
+  @override
+  void initState() {
+    super.initState();
+    _fetchFuture = context
+        .read<ShoppingListProvider>()
+        .fetchLists()
+        .catchError((error) => _showFetchError(context, error));
+  }
+
+  List<ShoppingList> _filter(List<ShoppingList> lists) {
     final filteredLists = _searchText.isEmpty
-        ? controller.lists
-        : controller.lists
+        ? lists
+        : lists
             .where((element) =>
                 element.name.toLowerCase().contains(_searchText.toLowerCase()))
             .toList();
 
-    filteredLists.sort((a, b) => a.completed ? 1 : -1);
+    filteredLists.sort((a, b) => a.name.compareTo(b.name));
 
     filteredLists.sort((a, b) => _dateAscending
         ? a.createdAt.compareTo(b.createdAt)
         : b.createdAt.compareTo(a.createdAt));
+
+    filteredLists.sort((a, b) => a.completed || b.items.isEmpty ? 1 : -1);
 
     return filteredLists;
   }
@@ -43,37 +51,49 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       floatingActionButton: FloatingActionButton(
           onPressed: () => _onAddPressed(context),
           child: const Icon(Icons.playlist_add)),
-      body:
-          Consumer<ShoppingListProvider>(builder: (context, controller, child) {
-        _fetchFuture = _fetchFuture ??
-            controller
-                .fetchLists()
-                .catchError((error) => _showFetchError(context, error));
+      body: FutureBuilder(
+          future: _fetchFuture,
+          builder: (context, snapshot) => Consumer<ShoppingListProvider>(
+                  builder: (context, provider, child) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return const Center(child: Text('Erro ao buscar listas'));
+                }
 
-        return FutureBuilder(
-            future: _fetchFuture,
-            builder: (context, snapshot) => ConditionalLoadingIndicator(
-                predicate: () =>
-                    snapshot.connectionState == ConnectionState.waiting,
-                childBuilder: (context) => Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          _filterSection(),
-                          _infoSection(controller.lists),
-                          Expanded(
-                            child: ListView.builder(
-                              itemCount: _filter(controller).length,
-                              itemBuilder: (context, index) {
-                                final list = _filter(controller)[index];
-                                return ShoppingListCard(list: list);
-                              },
-                            ),
-                          ),
-                        ],
+                final lists = provider.lists;
+                if (lists.isEmpty) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.shopping_cart, size: 100),
+                        SizedBox(height: 16),
+                        Text('Nenhuma lista adicionada ainda...'),
+                      ],
+                    ),
+                  );
+                }
+
+                final filteredLists = _filter(lists);
+
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      _filterSection(),
+                      _infoSection(lists),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: filteredLists.length,
+                          itemBuilder: (context, index) =>
+                              ShoppingListCard(list: filteredLists[index]),
+                        ),
                       ),
-                    )));
-      }));
+                    ],
+                  ),
+                );
+              })));
 
   void _onAddPressed(BuildContext context) => showDialog(
         context: context,
@@ -82,7 +102,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   Widget _filterSection() => Card(
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
@@ -93,30 +113,34 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                         TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
               ),
               const Divider(),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      onChanged: (value) => setState(() => _searchText = value),
-                      decoration: const InputDecoration(
-                          hintText: 'Digite o nome da lista',
-                          labelText: 'Buscar lista',
-                          prefixIcon: Icon(Icons.search)),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        onChanged: (value) =>
+                            setState(() => _searchText = value),
+                        decoration: const InputDecoration(
+                            hintText: 'Digite o nome da lista',
+                            labelText: 'Buscar lista',
+                            prefixIcon: Icon(Icons.search)),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  IconButton(
-                      onPressed: () =>
-                          setState(() => _dateAscending = !_dateAscending),
-                      icon: Row(
-                        children: [
-                          const Icon(Icons.calendar_today),
-                          Icon(_dateAscending
-                              ? Icons.arrow_downward
-                              : Icons.arrow_upward),
-                        ],
-                      ))
-                ],
+                    const SizedBox(width: 16),
+                    IconButton(
+                        onPressed: () =>
+                            setState(() => _dateAscending = !_dateAscending),
+                        icon: Row(
+                          children: [
+                            const Icon(Icons.calendar_today),
+                            Icon(_dateAscending
+                                ? Icons.arrow_downward
+                                : Icons.arrow_upward),
+                          ],
+                        ))
+                  ],
+                ),
               ),
             ],
           ),
@@ -134,7 +158,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                      'Total de listas pendentes: ${lists.where((element) => !element.completed).length}'),
+                      'Total de listas pendentes: ${lists.where((list) => !list.completed || list.items.isEmpty).length}'),
                   Text('Total de listas: ${lists.length}')
                 ],
               ),

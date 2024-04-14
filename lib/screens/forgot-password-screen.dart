@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-
-import '../contants/app-route.dart';
-import '../services/auth-service.dart';
+import 'package:provider/provider.dart';
+import '../constants/app-route.dart';
+import '../providers/auth-provider.dart';
 import '../widgets/email-field.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -29,7 +29,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
       );
 
-  void _onSendEmailPressed(BuildContext context) => AuthService()
+  void _onSendEmailPressed(BuildContext context) => context
+      .read<AuthProvider>()
       .sendPasswordResetEmail(email: _emailController.text)
       .then((value) => _showSuccessDialog(context))
       .catchError((_) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -39,8 +40,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           )));
 
   void _showSuccessDialog(BuildContext context) => showDialog(
-      context: context,
-      builder: (context) => const _SuccessEmailSentDialog());
+      context: context, builder: (context) => const _SuccessEmailSentDialog());
 }
 
 class _SendEmailForm extends StatelessWidget {
@@ -87,7 +87,7 @@ class _SendEmailForm extends StatelessWidget {
 }
 
 class _SuccessEmailSentDialog extends StatelessWidget {
-  const _SuccessEmailSentDialog({super.key});
+  const _SuccessEmailSentDialog();
 
   @override
   Widget build(BuildContext context) => AlertDialog(
