@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:mobile_shopping_list_app/widgets/email-field.dart';
 import 'package:mobile_shopping_list_app/widgets/password-field.dart';
 import 'package:provider/provider.dart';
@@ -48,6 +49,11 @@ class LoginScreen extends StatelessWidget {
                       label: const Text('Entrar'),
                       icon: const Icon(Icons.login)),
                 ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: _googleSignInButton(context),
+                ),
               ],
             ),
           ),
@@ -55,6 +61,11 @@ class LoginScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _googleSignInButton(BuildContext context) => ElevatedButton.icon(
+      onPressed: () => _onGoogleSignInPressed(context),
+      icon: const Icon(FontAwesomeIcons.google),
+      label: const Text('Entrar com Google'));
 
   Widget _navigationSection() => const Align(
         alignment: Alignment.bottomLeft,
@@ -69,6 +80,20 @@ class LoginScreen extends StatelessWidget {
           ],
         ),
       );
+
+  void _onGoogleSignInPressed(BuildContext context) {
+    context.read<AuthProvider>().signInWithGoogle().then((_) {
+      AppRoute.navigateTo(context, AppRoute.shoppingList);
+    }).catchError((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Text(
+              'Erro ao fazer login com Google. Tente novamente mais tarde.'),
+        ),
+      );
+    });
+  }
 
   void _onSignInPressed(BuildContext context) {
     if (_formKey.currentState!.validate()) {

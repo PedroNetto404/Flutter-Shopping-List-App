@@ -1,10 +1,12 @@
 import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mobile_shopping_list_app/services/storage-service.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final StorageService _storageService = StorageService();
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   static AuthService? _instance;
 
@@ -37,5 +39,19 @@ class AuthService {
     var url = await _storageService.uploadFile(
         'users/${currentUser!.uid}/profile-picture', fileBytes, 'image/jpeg');
     await currentUser!.updatePhotoURL(url);
+  }
+
+  Future<void> signInWithGoogle() async {
+    final googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) return;
+
+    final googleAuth = await googleUser.authentication;
+
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    await _firebaseAuth.signInWithCredential(credential);
   }
 }

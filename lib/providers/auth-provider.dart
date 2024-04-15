@@ -43,4 +43,9 @@ class AuthProvider extends ChangeNotifier {
     await _authService.updateProfilePicture(fileBytes);
     notifyListeners();
   }
+
+  Future<void> signInWithGoogle() async {
+    await _authService.signInWithGoogle();
+    notifyListeners();
+  }
 }
