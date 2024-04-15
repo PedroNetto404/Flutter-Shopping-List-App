@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_shopping_list_app/extensions/string-extensions.dart';
 import 'package:mobile_shopping_list_app/providers/shopping-list-provider.dart';
 import 'package:mobile_shopping_list_app/widgets/delete-confirmation-dialog.dart';
+import 'package:mobile_shopping_list_app/widgets/list-completed-dialog.dart';
 import 'package:mobile_shopping_list_app/widgets/shopping-list-card.dart';
 import 'package:mobile_shopping_list_app/widgets/layout.dart';
 import 'package:provider/provider.dart';
@@ -196,21 +197,40 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   void _onAddPressed(BuildContext context) => showDialog(
       context: context,
-      builder: (context) => ShoppingListDialog.createList(
-          onSaveAsync: (String name) => context
-              .read<ShoppingListProvider>()
-              .addShoppingList(name)
-              .catchError((error) => ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text('Erro ao adicionar lista: $error'),
-                      backgroundColor: Colors.red)))));
+      builder: (context) =>
+          ShoppingListDialog.createList(onSaveAsync: (String name) async {
+            final provider = context.read<ShoppingListProvider>();
+
+            final listWithSameName = provider.lists
+                .where((element) => element.name == name)
+                .firstOrNull;
+            if (listWithSameName != null) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('Já existe uma lista com o nome $name'),
+                  backgroundColor: Colors.red));
+              return;
+            }
+
+            await provider.addShoppingList(name).catchError((error) =>
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Erro ao adicionar lista: $error'),
+                    backgroundColor: Colors.red)));
+          }));
 
   void _onCheckboxTap(BuildContext context, ShoppingList list) {
     var provider = context.read<ShoppingListProvider>();
 
-    final future = list.completed
-        ? provider.resetShoppingList(list.id)
-        : provider.completeShoppingList(list.id);
+    Future<void> future;
+
+    if (!list.completed) {
+      future = provider.completeShoppingList(list.id);
+
+      showDialog(
+          context: context,
+          builder: (context) => ListCompletedDialog(listName: list.name));
+    } else {
+      future = provider.resetShoppingList(list.id);
+    }
 
     future.catchError((error) => ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

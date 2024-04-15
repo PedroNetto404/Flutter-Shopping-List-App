@@ -31,10 +31,10 @@ class ShoppingItemDialog extends StatefulWidget {
 class ShoppingItemDialogState extends State<ShoppingItemDialog> {
   final _nameController = TextEditingController();
   final _quantityController = TextEditingController(text: '1.000');
-  final _categoryController = TextEditingController();
   final _noteController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   UnitType _selectedUnit = UnitType.un;
+  String _selectedCategory = '';
 
   @override
   void initState() {
@@ -46,7 +46,7 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
 
     _nameController.text = item.name;
     _quantityController.text = item.quantity.toString();
-    _categoryController.text = item.category;
+    _selectedCategory = item.category;
     _selectedUnit = item.unityType;
     _noteController.text = item.note ?? '';
   }
@@ -114,7 +114,7 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
   Widget _categoryField() => Selector<ShoppingListProvider, List<String>>(
       builder: (BuildContext context, List<String> categories, Widget? child) =>
           Autocomplete(
-              initialValue: TextEditingValue(text: _categoryController.text),
+              initialValue: TextEditingValue(text: _selectedCategory),
               optionsBuilder: (textEditingValue) {
                 if (textEditingValue.text.isEmpty) return categories;
 
@@ -123,14 +123,14 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
                         element.toLowerCase().contains(textEditingValue.text))
                     .toList();
               },
-              onSelected: (String value) => _categoryController.text = value,
+              onSelected: (String value) => setState(() => _selectedCategory = value),
               fieldViewBuilder: (context, controller, focusNode,
                       onFieldSubmitted) =>
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextFormField(
                       controller: controller,
-                      onChanged: (value) => _categoryController.text = value,
+                      onChanged: (value) => setState(() => _selectedCategory = value),
                       focusNode: focusNode,
                       keyboardType: TextInputType.text,
                       decoration: const InputDecoration(
@@ -221,7 +221,7 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
 
     final name = _nameController.text.trim();
     final quantity = double.tryParse(_quantityController.text) ?? 1;
-    final category = _categoryController.text.trim();
+    final category = _selectedCategory;
     final note = _noteController.text.trim();
 
     widget.onSaveAsync(name, quantity, _selectedUnit, category, note);
