@@ -16,17 +16,14 @@ class AuthProvider extends ChangeNotifier {
 
   bool get isAuthenticated => _isAuthenticated;
 
-  Future<void> signIn({required String email, required String password}) async {
-    await _authService.signIn(email: email, password: password);
+  Future<void> signIn(String email, String password) async {
+    await _authService.signIn(email, password);
     _isAuthenticated = true;
     notifyListeners();
   }
 
-  Future<void> create(
-      {required String email,
-      required String password,
-      required String name}) async {
-    await _authService.create(email: email, password: password, name: name);
+  Future<void> create(String email, String password, String name) async {
+    await _authService.create(email, password, name);
     _isAuthenticated = true;
     notifyListeners();
   }
@@ -37,7 +34,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> sendPasswordResetEmail({required String email}) async {
+  Future<void> sendPasswordResetEmail(String email) async {
     await _authService.sendPasswordResetEmail(email: email);
     notifyListeners();
   }

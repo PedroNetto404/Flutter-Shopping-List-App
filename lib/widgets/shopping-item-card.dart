@@ -1,43 +1,44 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:provider/provider.dart';
-import '../providers/shopping-list-provider.dart';
+import 'package:mobile_shopping_list_app/extensions/string-extensions.dart';
+import 'package:mobile_shopping_list_app/models/enums/unit-type.dart';
 import '../models/shopping-item.dart';
-import 'delete-confirmation-dialog.dart';
 import 'info-with-icon.dart';
-import 'shopping-item-dialog.dart';
 
 class ShoppingItemCard extends StatelessWidget {
   final String listId;
   final ShoppingItem item;
+  final VoidCallback onDeletePressed;
+  final Function(bool) onMarkPurchaseChange;
+  final VoidCallback onEditPressed;
 
-  const ShoppingItemCard({super.key, required this.item, required this.listId});
+  const ShoppingItemCard(
+      {super.key,
+      required this.item,
+      required this.listId,
+      required this.onDeletePressed,
+      required this.onMarkPurchaseChange,
+      required this.onEditPressed});
 
   @override
   Widget build(BuildContext context) => Card(
         child: ListTile(
-          title: Text(item.name,
-              style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(item.name.capitalize(),
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, overflow: TextOverflow.fade)),
           leading: Checkbox(
               value: item.purchased,
-              onChanged: (_) => _onTogglePurchasePressed(context)),
-          subtitle: Row(
+              onChanged: (value) => onMarkPurchaseChange(value!)),
+          subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: InfoWithIcon(
-                  icon: Icons.shopping_bag,
-                  info:
-                      '${item.quantity.toStringAsFixed(3)} ${item.unityType.toString().split('.').last.toUpperCase()}',
-                ),
+              InfoWithIcon(
+                icon: Icons.shopping_bag,
+                info: _formatQuantityWithUnit(item.quantity, item.unityType),
               ),
               if (item.category.isNotEmpty)
-                Expanded(
-                  child: InfoWithIcon(
-                    icon: Icons.category,
-                    info: item.category,
-                  ),
+                InfoWithIcon(
+                  icon: Icons.category,
+                  info: item.category.capitalize(),
                 ),
             ],
           ),
@@ -46,64 +47,15 @@ class ShoppingItemCard extends StatelessWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.edit),
-                onPressed: () => _onEditPressed(context),
+                onPressed: onEditPressed,
               ),
               IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () => _onDeletePressed(context)),
+                  icon: const Icon(Icons.delete), onPressed: onDeletePressed),
             ],
           ),
         ),
       );
 
-  void _onDeletePressed(BuildContext context) => showDialog(
-      context: context,
-      builder: (context) => DeleteConfirmationDialog(
-            title: 'Remover item',
-            content: 'Tem certeza que seja remover o item "${item.name}"?',
-            onConfirm: () => _onDeleteConfirmed(context),
-          ));
-
-  void _onDeleteConfirmed(BuildContext context) {
-    var controller = context.read<ShoppingListProvider>();
-    controller.removeItemFromShoppingList(listId: listId, itemName: item.name);
-  }
-
-  void _onEditPressed(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) =>
-          ShoppingItemDialog.updateItem(listId: listId, itemName: item.name),
-    );
-  }
-
-  void _onTogglePurchasePressed(BuildContext context) {
-    var provider = context.read<ShoppingListProvider>();
-    provider.toggleItemPurchase(listId, item.name);
-
-    if(provider.getList(listId).completed){
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.check, color: Colors.green),
-              SizedBox(width: 8),
-              Text('Lista concluída'),
-            ],
-          ),
-          content: const Text('Todos os itens foram marcados como comprados.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    }
-  }
+  String _formatQuantityWithUnit(double quantity, UnitType unit) =>
+      '${quantity.toStringAsFixed(3)} ${unit.toString().split('.').last.toUpperCase()}';
 }

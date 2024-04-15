@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_shopping_list_app/extensions/string-extensions.dart';
 import 'package:mobile_shopping_list_app/providers/shopping-list-provider.dart';
 import 'package:mobile_shopping_list_app/models/shopping-list.dart';
 import 'package:mobile_shopping_list_app/widgets/shopping-item-card.dart';
 import 'package:provider/provider.dart';
+import '../models/enums/unit-type.dart';
 import '../models/shopping-item.dart';
+import '../widgets/delete-confirmation-dialog.dart';
+import '../widgets/list-completed-dialog.dart';
 import '../widgets/shopping-item-dialog.dart';
 
 class ShoppingListDetailsScreen extends StatefulWidget {
@@ -18,7 +22,7 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
   String _searchText = '';
   String _selectedCategory = 'Todas';
 
-  List<ShoppingItem> filterList(ShoppingList list) {
+  List<ShoppingItem> _getFilteredListItems(ShoppingList list) {
     var listItems = list.items.where((item) {
       bool pass = true;
       if (_searchText.isNotEmpty) {
@@ -46,10 +50,7 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
     return Scaffold(
         appBar: AppBar(title: const Text('Detalhes da Lista')),
         floatingActionButton: FloatingActionButton(
-            onPressed: () => showDialog(
-                context: context,
-                builder: (context) =>
-                    ShoppingItemDialog.createItem(listId: listId)),
+            onPressed: () => _onItemCreateButtonPressed(context, listId),
             child: const Icon(Icons.add_shopping_cart_sharp)),
         body:
             Selector<ShoppingListProvider, (ShoppingList, List<ShoppingItem>)>(
@@ -74,14 +75,23 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
                           children: [
                             _infoSection(list),
                             Expanded(
-                              child: ListView.builder(
-                                itemCount: filteredItems.length,
-                                itemBuilder: (context, index) =>
-                                    ShoppingItemCard(
+                                child: ListView.builder(
+                                    itemCount: filteredItems.length,
+                                    itemBuilder: (context, index) {
+                                      final item = filteredItems[index];
+
+                                      return ShoppingItemCard(
                                         listId: listId,
-                                        item: filteredItems[index]),
-                              ),
-                            ),
+                                        item: item,
+                                        onDeletePressed: () => _onDeletePressed(
+                                            context, item, listId),
+                                        onMarkPurchaseChange: (_) =>
+                                            _onTogglePurchasePressed(
+                                                context, listId, item),
+                                        onEditPressed: () => _onEditPressed(
+                                            context, item, listId),
+                                      );
+                                    })),
                           ],
                         ))
                       ],
@@ -90,7 +100,7 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
           },
           selector: (context, provider) {
             final list = provider.getList(listId);
-            final filteredItems = filterList(list);
+            final filteredItems = _getFilteredListItems(list);
 
             return (list, filteredItems);
           },
@@ -107,7 +117,7 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 16, left: 16),
                 child: Text(
-                  "🛍️ ${list.name}",
+                  "🛍️ ${list.name.capitalize()}",
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -136,14 +146,6 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
           ),
         ),
       );
-
-  void _onMarkAllItemsChange(bool value, String listId) {
-    var provider = context.read<ShoppingListProvider>();
-
-    value
-        ? provider.completeShoppingList(listId)
-        : provider.resetShoppingList(listId);
-  }
 
   Widget _filterSection(ShoppingList list) => Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -174,7 +176,7 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
                   items: _getCategories(list.items)
                       .map((e) => DropdownMenuItem<String>(
                             value: e,
-                            child: Text(e),
+                            child: Text(e.capitalize()),
                           ))
                       .toList(),
                 ),
@@ -226,8 +228,114 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
             .toSet()
       ];
 
+  void _onMarkAllItemsChange(bool value, String listId) {
+    var provider = context.read<ShoppingListProvider>();
+
+    if (value) {
+      provider.completeShoppingList(listId);
+      showDialog(
+          context: context,
+          builder: (context) =>
+              ListCompletedDialog(listName: provider.getList(listId).name));
+      return;
+    }
+
+    provider.resetShoppingList(listId);
+  }
+
   void _onCategoryChange(String? value) =>
       setState(() => _selectedCategory = value!);
 
   void _onSearchChange(String value) => setState(() => _searchText = value);
+
+  void _onDeletePressed(
+          BuildContext context, ShoppingItem item, String listId) =>
+      showDialog(
+          context: context,
+          builder: (context) => DeleteConfirmationDialog(
+              title: const Row(children: [
+                Icon(Icons.warning, color: Colors.red),
+                SizedBox(width: 8),
+                Text('Remover Item')
+              ]),
+              content: Row(
+                children: [
+                  const Text('Tem certeza que seja remover o item '),
+                  Text(item.name.capitalize(),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.blue)),
+                  const Text('?')
+                ]
+              ),
+              onConfirm: () => _onDeleteConfirmed(context, item, listId)));
+
+  void _onDeleteConfirmed(
+          BuildContext context, ShoppingItem item, String listId) =>
+      context
+          .read<ShoppingListProvider>()
+          .removeItemFromShoppingList(listId: listId, itemName: item.name)
+          .catchError((error) => ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text('Erro ao remover item: $error'),
+                  backgroundColor: Colors.red)));
+
+  void _onItemCreateButtonPressed(BuildContext context, String listId) =>
+      showDialog(
+          context: context,
+          builder: (context) => ShoppingItemDialog.createItem(
+                listId: listId,
+                onSaveAsync: (String name, double quantity, UnitType unitType,
+                        String category, String note) =>
+                    context
+                        .read<ShoppingListProvider>()
+                        .addItemToShoppingList(
+                            listId: listId,
+                            name: name,
+                            quantity: quantity,
+                            unityType: unitType,
+                            category: category,
+                            note: note)
+                        .catchError((error) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Erro ao adicionar item: $error'),
+                      backgroundColor: Colors.red));
+                }),
+              ));
+
+  void _onEditPressed(BuildContext context, ShoppingItem item, String listId) =>
+      showDialog(
+          context: context,
+          builder: (context) => ShoppingItemDialog.updateItem(
+              listId: listId,
+              item: item,
+              onSaveAsync: (String name, double quantity, UnitType unitType,
+                      String category, String note) =>
+                  context
+                      .read<ShoppingListProvider>()
+                      .updateShoppingItem(
+                          listId: listId,
+                          previousItemName: item.name,
+                          newName: name,
+                          newQuantity: quantity,
+                          newCategory: category,
+                          newNote: note,
+                          newUnitType: unitType)
+                      .catchError((erro) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text('Erro ao atualizar item: $erro'),
+                        backgroundColor: Colors.red));
+                  })));
+
+  void _onTogglePurchasePressed(
+      BuildContext context, String listId, ShoppingItem item) {
+    var provider = context.read<ShoppingListProvider>();
+    provider.toggleItemPurchase(listId, item.name);
+
+    if (provider.getList(listId).completed) {
+      showDialog(
+          context: context,
+          builder: (context) =>
+              ListCompletedDialog(listName: provider.getList(listId).name));
+    }
+  }
 }

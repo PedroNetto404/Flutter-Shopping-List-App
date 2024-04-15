@@ -17,15 +17,11 @@ class AuthService {
 
   User? get currentUser => _firebaseAuth.currentUser;
 
-  Future<void> signIn(
-          {required String email, required String password}) async =>
+  Future<void> signIn(String email, String password) async =>
       await _firebaseAuth.signInWithEmailAndPassword(
           email: email, password: password);
 
-  Future<void> create(
-      {required String email,
-      required String password,
-      required String name}) async {
+  Future<void> create(String email, String password, String name) async {
     final userCredentials = await _firebaseAuth.createUserWithEmailAndPassword(
         email: email, password: password);
 
@@ -41,12 +37,5 @@ class AuthService {
     var url = await _storageService.uploadFile(
         'users/${currentUser!.uid}/profile-picture', fileBytes, 'image/jpeg');
     await currentUser!.updatePhotoURL(url);
-  }
-
-  Future<Uint8List?> getProfilePicture() async {
-    var url = currentUser!.photoURL;
-    if (url == null) return null;
-
-    return await _storageService.downloadFile(url);
   }
 }

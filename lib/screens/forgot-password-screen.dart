@@ -31,7 +31,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   void _onSendEmailPressed(BuildContext context) => context
       .read<AuthProvider>()
-      .sendPasswordResetEmail(email: _emailController.text)
+      .sendPasswordResetEmail(_emailController.text)
       .then((value) => _showSuccessDialog(context))
       .catchError((_) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content:

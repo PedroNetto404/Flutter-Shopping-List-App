@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import '../models/shopping-list.dart';
 import '../screens/about-screen.dart';
 import '../screens/forgot-password-screen.dart';
 import '../screens/home-screen.dart';
@@ -47,5 +46,5 @@ class AppRoute {
           context,
           MaterialPageRoute(
               builder: (context) =>
-                  TakePictureScreen(pictureHandler: handler)));
+                  TakePictureScreen(handler: handler)));
 }

@@ -30,7 +30,7 @@ class _UnitTypeRadiosState extends State<UnitTypeRadios> {
       );
 
   Widget _radioWithTitle(UnitType unitType) => Column(children: [
-        Text(unitType.name),
+        Text(unitType.name.toUpperCase()),
         Radio(
             value: unitType,
             groupValue: _selectedUnitType,

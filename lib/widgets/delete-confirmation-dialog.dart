@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class DeleteConfirmationDialog extends StatelessWidget {
-  final String title;
-  final String content;
+  final Widget title;
+  final Widget content;
   final void Function() onConfirm;
 
   const DeleteConfirmationDialog(
@@ -14,16 +14,16 @@ class DeleteConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(title),
-      content: Text(content),
+      title: title,
+      content: content,
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: () {
             Navigator.pop(context);
           },
           child: const Text('Cancelar'),
         ),
-        ElevatedButton(
+        TextButton(
           onPressed: () {
             onConfirm();
             Navigator.pop(context);

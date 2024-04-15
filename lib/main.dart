@@ -26,11 +26,9 @@ class MainApp extends StatelessWidget {
             ChangeNotifierProvider(create: (context) => ShoppingListProvider()),
             ChangeNotifierProvider(create: (context) => AuthProvider())
           ],
-          builder: (context, child) {
-            final themeProvider = Provider.of<ThemeProvider>(context);
-            final authProvider = Provider.of<AuthProvider>(context);
-
-            return MaterialApp(
+          builder: (context, child) => Consumer2<ThemeProvider, AuthProvider>(
+              builder: (context, themeProvider, authProvider, child) =>
+             MaterialApp(
                 debugShowCheckedModeBanner: false,
                 initialRoute: authProvider.isAuthenticated
                     ? AppRoute.shoppingList.value
@@ -38,6 +36,5 @@ class MainApp extends StatelessWidget {
                 routes: AppRoute.routesMap,
                 themeMode: themeProvider.themeMode,
                 theme: CustomTheme.lightTheme,
-                darkTheme: CustomTheme.darkTheme);
-          });
+                darkTheme: CustomTheme.darkTheme)));  
 }

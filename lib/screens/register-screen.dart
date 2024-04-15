@@ -108,7 +108,7 @@ class RegisterScreen extends StatelessWidget {
 
     context
         .read<AuthProvider>()
-        .create(email: email, password: password, name: name)
+        .create(email, password, name)
         .then((value) => AppRoute.navigateTo(context, AppRoute.shoppingList))
         .catchError((error) {
       ScaffoldMessenger.of(context).showSnackBar(

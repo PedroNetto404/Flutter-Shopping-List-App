@@ -11,6 +11,17 @@ class Layout extends StatelessWidget {
 
   const Layout({super.key, required this.body, this.floatingActionButton});
 
+  static const Map<AppRoute, (int, String, String, IconData)> bottomBarMap = {
+    AppRoute.about: (0, 'Sobre', 'Sobre o app', Icons.info),
+    AppRoute.shoppingList: (
+      1,
+      'Listas',
+      'Minhas lista de compras',
+      Icons.shopping_cart
+    ),
+    AppRoute.profile: (2, 'Perfil', 'Meu perfil', Icons.account_circle)
+  };
+
   @override
   Widget build(BuildContext context) =>
       Consumer<AuthProvider>(builder: (context, provider, child) {
@@ -49,58 +60,40 @@ class Layout extends StatelessWidget {
 
   Widget _bottomNavigationBar(BuildContext context) => BottomNavigationBar(
         selectedFontSize: 16,
-        selectedIconTheme: const IconThemeData(size: 40),
         unselectedFontSize: 12,
-        unselectedIconTheme: const IconThemeData(size: 24),
         currentIndex: _getCurrentIndex(context),
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.info), label: 'Sobre', tooltip: 'Sobre o app'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart),
-              label: 'Listas',
-              tooltip: 'Minhas lista de compras'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.account_circle),
-              label: 'Perfil',
-              tooltip: 'Meu perfil'),
-        ],
-        onTap: (index) {
-          final currentRoute = ModalRoute.of(context)!.settings.name;
-
-          if (index == 0 && currentRoute != AppRoute.about.value) {
-            Navigator.pushReplacementNamed(context, AppRoute.about.value);
-            return;
-          }
-
-          if (index == 1 && currentRoute != AppRoute.shoppingList.value) {
-            Navigator.pushReplacementNamed(
-                context, AppRoute.shoppingList.value);
-            return;
-          }
-
-          if (index == 2 && currentRoute != AppRoute.profile.value) {
-            Navigator.pushReplacementNamed(context, AppRoute.profile.value);
-          }
-        },
+        items: bottomBarMap.entries.map((entry) {
+          final (_, label, tooltip, icon) = entry.value;
+          return BottomNavigationBarItem(
+              label: label, tooltip: tooltip, icon: Icon(icon));
+        }).toList(),
+        onTap: (index) => _onBottonIconTap(index, context),
       );
 
-  int _getCurrentIndex(BuildContext context) {
-    final currentRoute = ModalRoute.of(context)!.settings.name;
+  void _onBottonIconTap(int index, BuildContext context) {
+    final appRoute = bottomBarMap.entries
+        .firstWhere((entry) => entry.value.$1 == index)
+        .key;
 
-    if (currentRoute == AppRoute.about.value) return 0;
-    if (currentRoute == AppRoute.shoppingList.value) return 1;
+    if (appRoute.value == ModalRoute.of(context)!.settings.name) return;
 
-    return 2;
+    AppRoute.navigateTo(context, appRoute);
   }
 
-  void _onSignOutPressed(BuildContext context, AuthProvider provider) => provider
-        .signOut()
-        .then((_) => AppRoute.navigateTo(context, AppRoute.home))
-        .catchError((_) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Não foi possível sair da sua conta. Tente novamente mais tarde.'),
-          backgroundColor: Colors.redAccent));
-    });
+  int _getCurrentIndex(BuildContext context) => bottomBarMap.entries
+        .firstWhere(
+            (entry) => entry.key.value == ModalRoute.of(context)!.settings.name)
+        .value
+        .$1;
+
+  void _onSignOutPressed(BuildContext context, AuthProvider provider) =>
+      provider
+          .signOut()
+          .then((_) => AppRoute.navigateTo(context, AppRoute.home))
+          .catchError((_) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text(
+                'Não foi possível sair da sua conta. Tente novamente mais tarde.'),
+            backgroundColor: Colors.redAccent));
+      });
 }

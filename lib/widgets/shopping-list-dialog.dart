@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../providers/shopping-list-provider.dart';
 import '../models/shopping-list.dart';
 
 class ShoppingListDialog extends StatelessWidget {
   final ShoppingList? _list;
   final _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final Future<void> Function(String name) onSaveAsync;
 
-  ShoppingListDialog.createList({super.key}) : _list = null;
+  ShoppingListDialog.createList({super.key, required this.onSaveAsync})
+      : _list = null;
 
   ShoppingListDialog.updateList({
     super.key,
     required ShoppingList list,
+    required this.onSaveAsync,
   }) : _list = list {
     _nameController.text = list.name;
   }
@@ -31,8 +31,11 @@ class ShoppingListDialog extends StatelessWidget {
           TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancelar')),
-          ElevatedButton(
-              onPressed: () => onSavedPressed(context),
+          OutlinedButton(
+              onPressed: () {
+                onSavedPressed(context);
+                Navigator.pop(context);
+              },
               child: const Text("Salvar")),
         ],
         content: Padding(
@@ -62,20 +65,6 @@ class ShoppingListDialog extends StatelessWidget {
 
     final listName = _nameController.text.trim();
 
-    final controller = context.read<ShoppingListProvider>();
-
-    final future = _list == null
-        ? controller.addShoppingList(listName)
-        : controller.updateShoppingListName(_list.id, listName);
-
-    future
-        .then((value) => Navigator.pop(context))
-        .catchError((error) => _onSaveError(context, error));
+    onSaveAsync(listName);
   }
-
-  void _onSaveError(BuildContext context, Object error) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Erro ao salvar lista: $error'),
-        backgroundColor: Theme.of(context).colorScheme.error,
-      ));
 }

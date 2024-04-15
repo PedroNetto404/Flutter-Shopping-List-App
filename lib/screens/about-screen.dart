@@ -9,7 +9,7 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) => Layout(
           body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Center(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -69,14 +69,7 @@ class AboutScreen extends StatelessWidget {
   Widget _developerPicture(context) => Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(200),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).colorScheme.primary,
-              blurRadius: 10,
-              spreadRadius: 5,
-              offset: const Offset(0, 5),
-            ),
-          ],
+          border: Border.all(color: Theme.of(context).primaryColor, width: 5),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(200),

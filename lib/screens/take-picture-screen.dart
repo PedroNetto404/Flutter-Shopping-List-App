@@ -1,12 +1,14 @@
+import 'dart:math';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../widgets/layout.dart';
 
 class TakePictureScreen extends StatefulWidget {
-  final Future<void> Function(Uint8List) pictureHandler;
+  final Future<void> Function(Uint8List) handler;
 
-  const TakePictureScreen({super.key, required this.pictureHandler});
+  const TakePictureScreen({super.key, required this.handler});
 
   @override
   TakePictureScreenState createState() => TakePictureScreenState();
@@ -35,8 +37,14 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   void initState() {
     super.initState();
 
-    _initFuture =
-        _initCameras().catchError((error) => _handleError(context, error));
+    _initFuture = _initCameras().catchError((error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Erro ao inicializar a câmera: ${error.toString()}'),
+        backgroundColor: Colors.red,
+      ));
+    });
   }
 
   Future<void> _initCameras() async {
@@ -46,7 +54,9 @@ class TakePictureScreenState extends State<TakePictureScreen> {
       final cameraController =
           CameraController(camera, ResolutionPreset.medium);
 
-      await cameraController.initialize();
+      if (!cameraController.value.isInitialized) {
+        await cameraController.initialize();
+      }
 
       _camerasControllers.add(cameraController);
     }
@@ -54,22 +64,23 @@ class TakePictureScreenState extends State<TakePictureScreen> {
 
   @override
   Widget build(BuildContext context) => Layout(
-          body: FutureBuilder(
-        future: _initFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting || _takingPicture) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return const Center(child: Text('Erro ao inicializar a câmera'));
-          }
+        body: FutureBuilder(
+          future: _initFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting ||
+                _takingPicture) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return const Center(child: Text('Erro ao inicializar a câmera'));
+            }
 
-          return Column(
-            children: [
-              _header(),
-              _cameraSection(),
-            ],
-          );
-        },
+            return Column(
+              children: [
+                _header(),
+                _cameraSection(),
+              ],
+            );
+          },
         ),
       );
 
@@ -134,32 +145,20 @@ class TakePictureScreenState extends State<TakePictureScreen> {
         .takePicture()
         .then((value) => value.readAsBytes())
         .then((value) => _showPictureFeedbackDialog(value, context))
-        .catchError((error) => _handleError(context, error))
-        .whenComplete(_handleTakingPictureCompleted);
+        .catchError((error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Erro ao tirar a foto'),
+        backgroundColor: Colors.red,
+      ));
+    }).whenComplete(() {
+      if (!mounted) return;
+
+      setState(() => _takingPicture = false);
+    });
 
     setState(() => _takingPicture = true);
-  }
-
-  void _handleTakingPictureCompleted() {
-    if (!mounted) return;
-
-    setState(() => _takingPicture = false);
-  }
-
-  void _handleError(BuildContext context, Object error) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Column(
-          children: [
-            const Text('Erro ao tirar a foto'),
-            Text(error.toString()),
-          ],
-        ),
-        backgroundColor: Theme.of(context).colorScheme.error,
-      ),
-    );
   }
 
   void _showPictureFeedbackDialog(Uint8List picture, BuildContext context) =>
@@ -169,7 +168,14 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                 title: const Text('Gostou da foto?'),
                 content: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Image.memory(picture),
+                  child: Container(
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 4,
+                          )),
+                      child: Image.memory(picture)),
                 ),
                 actions: [
                   TextButton(
@@ -183,8 +189,12 @@ class TakePictureScreenState extends State<TakePictureScreen> {
               ));
 
   void _onPictureConfirmedPressed(Uint8List picture, BuildContext context) =>
-      widget
-          .pictureHandler(picture)
-          .catchError((error) => _handleError(context, error))
-          .whenComplete(() => Navigator.of(context).pop());
+      widget.handler(picture).catchError((error) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Erro ao salvar a foto'),
+          backgroundColor: Colors.red,
+        ));
+      }).whenComplete(() => Navigator.of(context).pop());
 }

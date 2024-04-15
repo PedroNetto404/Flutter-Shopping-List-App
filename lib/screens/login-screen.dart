@@ -77,7 +77,7 @@ class LoginScreen extends StatelessWidget {
 
       context
           .read<AuthProvider>()
-          .signIn(email: email, password: password)
+          .signIn(email, password)
           .then((_) => AppRoute.navigateTo(context, AppRoute.shoppingList))
           .catchError((_) {
         ScaffoldMessenger.of(context).showSnackBar(
