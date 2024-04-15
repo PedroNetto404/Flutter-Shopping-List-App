@@ -1,4 +1,4 @@
-import 'package:mobile_shopping_list_app/models/enums/unit-type.dart';
+import '../models/enums/unit-type.dart';
 
 class ShoppingItem {
   String _name;

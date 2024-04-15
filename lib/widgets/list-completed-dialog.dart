@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/extensions/string-extensions.dart';
+
+import '../extensions/extensions.dart';
 
 class ListCompletedDialog extends StatelessWidget {
   final String listName;

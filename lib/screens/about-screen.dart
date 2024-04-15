@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/widgets/layout.dart';
-import '../widgets/info-with-icon.dart';
+
+import '../widgets/widgets.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});

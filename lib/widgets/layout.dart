@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/screens/home-screen.dart';
-import 'package:mobile_shopping_list_app/widgets/theme-selector.dart';
-import 'package:provider/provider.dart';
-import '../constants/app-route.dart';
-import '../providers/auth-provider.dart';
+import 'package:mobile_shopping_list_app/screens/listify-progress-screen.dart';
+
+import '../providers/providers.dart';
+import '../constants/constants.dart';
+import '../widgets/widgets.dart';
 
 class Layout extends StatelessWidget {
   final Widget body;
@@ -11,7 +11,7 @@ class Layout extends StatelessWidget {
 
   const Layout({super.key, required this.body, this.floatingActionButton});
 
-  static const Map<AppRoute, (int, String, String, IconData)> bottomBarMap = {
+  static const Map<AppRoute, (int, String, String, IconData)> _bottomBarMap = {
     AppRoute.about: (0, 'Sobre', 'Sobre o app', Icons.info),
     AppRoute.shoppingList: (
       1,
@@ -25,7 +25,10 @@ class Layout extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       Consumer<AuthProvider>(builder: (context, provider, child) {
-        if (!provider.isAuthenticated) return const HomeScreen();
+        if (!provider.isAuthenticated) {
+          return const ListifyProgressScreen(
+              nextScreenRoute: AppRoute.home, miliseconds: 3000);
+        }
 
         return Scaffold(
             appBar: _appBar(context, provider),
@@ -61,8 +64,8 @@ class Layout extends StatelessWidget {
   Widget _bottomNavigationBar(BuildContext context) => BottomNavigationBar(
         selectedFontSize: 16,
         unselectedFontSize: 12,
-        currentIndex: _getCurrentIndex(context),
-        items: bottomBarMap.entries.map((entry) {
+        currentIndex: _getCurrentTabInfo(context),
+        items: _bottomBarMap.entries.map((entry) {
           final (_, label, tooltip, icon) = entry.value;
           return BottomNavigationBarItem(
               label: label, tooltip: tooltip, icon: Icon(icon));
@@ -70,27 +73,26 @@ class Layout extends StatelessWidget {
         onTap: (index) => _onBottonIconTap(index, context),
       );
 
-  void _onBottonIconTap(int index, BuildContext context) {
-    final appRoute = bottomBarMap.entries
-        .firstWhere((entry) => entry.value.$1 == index)
+  void _onBottonIconTap(int newTabIndex, BuildContext context) {
+    final currentTabIndex = _getCurrentTabInfo(context);
+    if (currentTabIndex == newTabIndex) return;
+
+    final newTabRoute = _bottomBarMap.entries
+        .firstWhere((entry) => entry.value.$1 == newTabIndex)
         .key;
 
-    if (appRoute.value == ModalRoute.of(context)!.settings.name) return;
-
-    AppRoute.navigateTo(context, appRoute);
+    AppRoute.navigateTo(context, newTabRoute);
   }
 
-  int _getCurrentIndex(BuildContext context) => bottomBarMap.entries
-        .firstWhere(
-            (entry) => entry.key.value == ModalRoute.of(context)!.settings.name)
-        .value
-        .$1;
+  int _getCurrentTabInfo(BuildContext context) => _bottomBarMap.entries
+      .firstWhere(
+          (entry) => entry.key.value == ModalRoute.of(context)!.settings.name,
+          orElse: (() => _bottomBarMap.entries.elementAt(1)))
+      .value
+      .$1;
 
   void _onSignOutPressed(BuildContext context, AuthProvider provider) =>
-      provider
-          .signOut()
-          .then((_) => AppRoute.navigateTo(context, AppRoute.home))
-          .catchError((_) {
+      provider.signOut().catchError((_) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text(
                 'Não foi possível sair da sua conta. Tente novamente mais tarde.'),

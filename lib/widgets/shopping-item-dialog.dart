@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../models/shopping-item.dart';
-import '../providers/shopping-list-provider.dart';
-import '../models/enums/unit-type.dart';
-import 'circle-button.dart';
-import 'unit-type-radios.dart';
+
+import '../providers/providers.dart';
+import '../widgets/widgets.dart';
+import '../models/models.dart';
 
 class ShoppingItemDialog extends StatefulWidget {
   final String listId;

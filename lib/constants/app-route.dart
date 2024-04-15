@@ -1,14 +1,6 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import '../screens/about-screen.dart';
-import '../screens/forgot-password-screen.dart';
-import '../screens/home-screen.dart';
-import '../screens/login-screen.dart';
-import '../screens/profile-screen.dart';
-import '../screens/register-screen.dart';
-import '../screens/shopping-list-details-screen.dart';
-import '../screens/shopping-list-screen.dart';
-import '../screens/take-picture-screen.dart';
+
+import '../screens/screens.dart';
 
 class AppRoute {
   final String value;
@@ -25,7 +17,7 @@ class AppRoute {
   static const takePicture = AppRoute._('/take-picture');
   static const profile = AppRoute._('/profile');
 
-  static Map<String, Widget Function(BuildContext)> routesMap = {
+  static final Map<String, Widget Function(BuildContext)> _routesMap = {
     home.value: (context) => const HomeScreen(),
     login.value: (context) => LoginScreen(),
     forgotPassword.value: (context) => const ForgotPasswordScreen(),
@@ -33,18 +25,28 @@ class AppRoute {
     shoppingList.value: (context) => const ShoppingListScreen(),
     shoppingListDetails.value: (context) => const ShoppingListDetailsScreen(),
     about.value: (context) => const AboutScreen(),
-    profile.value: (context) => const ProfileScreen(),
+    profile.value: (context) => const ProfileScreen()
   };
 
   static Future<void> navigateTo(BuildContext context, AppRoute route,
           {Object? arguments}) =>
       Navigator.pushNamed(context, route.value, arguments: arguments);
 
-  static void navigateToTakePictureScreen(
-          BuildContext context, Future<void> Function(Uint8List) handler) =>
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) =>
-                  TakePictureScreen(handler: handler)));
+  static Route<dynamic>? onGenerateRoute(RouteSettings settings) =>
+      PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 800),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              _routesMap[settings.name]?.call(context) ?? const HomeScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+              FadeTransition(
+                  opacity: animation.drive(Tween(begin: 0.0, end: 1.0)
+                      .chain(CurveTween(curve: Curves.ease))),
+                  child: child),
+          settings: settings);
+
+  static void navigateWithLoading(BuildContext context, AppRoute shoppingList) {
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (context) => ListifyProgressScreen(
+            nextScreenRoute: shoppingList, miliseconds: 3000)));
+  }
 }

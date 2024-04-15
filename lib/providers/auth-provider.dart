@@ -1,14 +1,15 @@
 import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:mobile_shopping_list_app/services/auth-service.dart';
+import 'package:flutter/material.dart';
+
+import '../services/services.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
 
   late bool _isAuthenticated;
 
-  User get currentUser => _authService.currentUser!;
+  User? get currentUser => _authService.currentUser;
 
   AuthProvider() {
     _isAuthenticated = _authService.currentUser != null;
@@ -46,6 +47,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> signInWithGoogle() async {
     await _authService.signInWithGoogle();
+    _isAuthenticated = true;
     notifyListeners();
   }
 }

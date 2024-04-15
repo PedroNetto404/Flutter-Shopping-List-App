@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/shopping-list.dart';
+
+import '../models/models.dart';
 
 class ShoppingListDialog extends StatelessWidget {
   final ShoppingList? _list;

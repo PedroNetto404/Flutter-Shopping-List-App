@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/extensions/string-extensions.dart';
-import 'package:mobile_shopping_list_app/providers/shopping-list-provider.dart';
-import 'package:mobile_shopping_list_app/widgets/delete-confirmation-dialog.dart';
-import 'package:mobile_shopping_list_app/widgets/list-completed-dialog.dart';
-import 'package:mobile_shopping_list_app/widgets/shopping-list-card.dart';
-import 'package:mobile_shopping_list_app/widgets/layout.dart';
-import 'package:provider/provider.dart';
-import '../constants/app-route.dart';
-import '../models/shopping-list.dart';
-import '../widgets/shopping-list-dialog.dart';
+
+import '../models/models.dart';
+import '../providers/providers.dart';
+import '../widgets/widgets.dart';
+import '../extensions/extensions.dart';
+import '../constants/constants.dart';
 
 class ShoppingListScreen extends StatefulWidget {
   const ShoppingListScreen({super.key});
@@ -20,7 +16,7 @@ class ShoppingListScreen extends StatefulWidget {
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
   String _searchText = '';
   bool _dateAscending = true;
-  Future<void>? _fetchFuture;
+  late Future<void> _fetchFuture;
 
   @override
   void initState() {
@@ -29,12 +25,13 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     _initFetch();
   }
 
-  void _initFetch() => _fetchFuture = Future.delayed(
-      const Duration(seconds: 2),
-      () => context.read<ShoppingListProvider>().fetchLists().catchError(
-          (error) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+  void _initFetch() => _fetchFuture = context
+      .read<ShoppingListProvider>()
+      .fetchLists()
+      .catchError((error) => ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
               content: Text('Erro ao buscar listas: $error'),
-              backgroundColor: Colors.red))));
+              backgroundColor: Colors.red)));
 
   List<ShoppingList> _getFilteredLists(List<ShoppingList> lists) {
     final filteredLists = _searchText.isEmpty

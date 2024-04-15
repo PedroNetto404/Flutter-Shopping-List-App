@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_shopping_list_app/extensions/string-extensions.dart';
-import 'package:mobile_shopping_list_app/providers/shopping-list-provider.dart';
-import 'package:mobile_shopping_list_app/models/shopping-list.dart';
-import 'package:mobile_shopping_list_app/widgets/shopping-item-card.dart';
-import 'package:provider/provider.dart';
-import '../models/enums/unit-type.dart';
-import '../models/shopping-item.dart';
-import '../widgets/delete-confirmation-dialog.dart';
-import '../widgets/list-completed-dialog.dart';
-import '../widgets/shopping-item-dialog.dart';
+
+import '../providers/providers.dart';
+import '../widgets/widgets.dart';
+import '../models/models.dart';
+
 
 class ShoppingListDetailsScreen extends StatefulWidget {
   const ShoppingListDetailsScreen({super.key});

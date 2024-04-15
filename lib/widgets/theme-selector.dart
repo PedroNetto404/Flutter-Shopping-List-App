@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/providers/theme-provider.dart';
-import 'package:provider/provider.dart';
+
+import '../providers/providers.dart';
 
 class ThemeSelector extends StatelessWidget {
   const ThemeSelector({super.key});

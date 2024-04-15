@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:mobile_shopping_list_app/widgets/email-field.dart';
-import 'package:mobile_shopping_list_app/widgets/password-field.dart';
+import 'package:mobile_shopping_list_app/screens/screens.dart';
 import 'package:provider/provider.dart';
+
 import '../constants/app-route.dart';
 import '../providers/auth-provider.dart';
-import '../widgets/link.dart';
+import '../widgets/widgets.dart';
 
 class LoginScreen extends StatelessWidget {
   final _emailController = TextEditingController();
@@ -83,7 +83,7 @@ class LoginScreen extends StatelessWidget {
 
   void _onGoogleSignInPressed(BuildContext context) {
     context.read<AuthProvider>().signInWithGoogle().then((_) {
-      AppRoute.navigateTo(context, AppRoute.shoppingList);
+      AppRoute.navigateWithLoading(context, AppRoute.shoppingList);
     }).catchError((_) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -103,7 +103,7 @@ class LoginScreen extends StatelessWidget {
       context
           .read<AuthProvider>()
           .signIn(email, password)
-          .then((_) => AppRoute.navigateTo(context, AppRoute.shoppingList))
+          .then((_) => AppRoute.navigateWithLoading(context, AppRoute.shoppingList))
           .catchError((_) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

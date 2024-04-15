@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_shopping_list_app/constants/app-route.dart';
+
 import '../widgets/theme-selector.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => PopScope(
+    canPop: false,
+    child: Scaffold(
         body: Column(
           children: [
-            Expanded(flex: 3, child: _topSection(context)),
-            Expanded(flex: 6, child: _bottomSection(context)),
+            Expanded(flex: 1, child: _topSection(context)),
+            Expanded(flex: 2, child: _bottomSection(context)),
           ],
         ),
-      );
+      ));
 
   Widget _topSection(BuildContext context) => Container(
         decoration: const BoxDecoration(

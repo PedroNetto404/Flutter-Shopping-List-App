@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/widgets/email-field.dart';
-import 'package:mobile_shopping_list_app/widgets/password-field.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth-provider.dart';
-import '../constants/app-route.dart';
-import '../widgets/link.dart';
+
+import '../providers/providers.dart';
+import '../constants/constants.dart';
+import '../widgets/widgets.dart';
 
 class RegisterScreen extends StatelessWidget {
   RegisterScreen({super.key});

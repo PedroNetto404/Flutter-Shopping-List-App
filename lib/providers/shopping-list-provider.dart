@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_shopping_list_app/models/enums/unit-type.dart';
 import 'package:mobile_shopping_list_app/models/shopping-list.dart';
-import '../services/auth-service.dart';
-import '../services/shopping-list-repository.dart';
+
+import '../services/services.dart';
 
 class ShoppingListProvider extends ChangeNotifier {
   final _shoppingListRepository = ShoppingListRepository();

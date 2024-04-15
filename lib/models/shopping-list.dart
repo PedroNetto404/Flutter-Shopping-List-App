@@ -1,7 +1,6 @@
 import 'dart:collection';
 
-import 'package:mobile_shopping_list_app/models/enums/unit-type.dart';
-
+import './enums/unit-type.dart';
 import 'shopping-item.dart';
 
 class ShoppingList {

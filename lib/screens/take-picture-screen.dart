@@ -1,14 +1,13 @@
-import 'dart:math';
-
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
 import '../widgets/layout.dart';
 
-class TakePictureScreen extends StatefulWidget {
-  final Future<void> Function(Uint8List) handler;
+typedef PictureHandler = Future<void> Function(Uint8List);
 
-  const TakePictureScreen({super.key, required this.handler});
+class TakePictureScreen extends StatefulWidget {
+  const TakePictureScreen({super.key});
 
   @override
   TakePictureScreenState createState() => TakePictureScreenState();
@@ -77,7 +76,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
             return Column(
               children: [
                 _header(),
-                _cameraSection(),
+                _cameraSection(context),
               ],
             );
           },
@@ -98,40 +97,42 @@ class TakePictureScreenState extends State<TakePictureScreen> {
         ),
       );
 
-  Widget _cameraSection() => Expanded(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: CameraPreview(_currentCameraController,
-              child: Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 4,
-                    ),
-                    color: Colors.transparent,
+  Widget _cameraSection(BuildContext context) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: CameraPreview(_currentCameraController,
+            child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 4,
                   ),
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          if (_camerasControllers.length > 1)
-                            FloatingActionButton(
-                              onPressed: _onCameraChange,
-                              child: const Icon(Icons.switch_camera),
-                            ),
+                  color: Colors.transparent,
+                ),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        if (_camerasControllers.length > 1)
                           FloatingActionButton(
-                            onPressed: () => _onPictureTaken(context),
-                            child: const Icon(Icons.camera),
+                            onPressed: _onCameraChange,
+                            child: const Icon(Icons.switch_camera),
                           ),
-                        ],
-                      ),
+                        FloatingActionButton(
+                          onPressed: () => _onPictureTaken(context),
+                          child: const Icon(Icons.camera),
+                        ),
+                      ],
                     ),
-                  ))),
-        ),
-      );
+                  ),
+                ))),
+      ),
+    );
+  }
 
   void _onCameraChange() {
     if (_camerasControllers.length < 2) return;
@@ -188,13 +189,17 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                 ],
               ));
 
-  void _onPictureConfirmedPressed(Uint8List picture, BuildContext context) =>
-      widget.handler(picture).catchError((error) {
-        if (!mounted) return;
+  void _onPictureConfirmedPressed(Uint8List picture, BuildContext context) {
+    final handler =
+        ModalRoute.of(context)!.settings.arguments as PictureHandler;
 
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Erro ao salvar a foto'),
-          backgroundColor: Colors.red,
-        ));
-      }).whenComplete(() => Navigator.of(context).pop());
+    handler(picture).catchError((error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Erro ao salvar a foto'),
+        backgroundColor: Colors.red,
+      ));
+    }).whenComplete(() => Navigator.of(context).pop());
+  }
 }

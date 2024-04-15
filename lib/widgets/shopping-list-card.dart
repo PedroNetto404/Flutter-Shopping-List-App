@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/extensions/string-extensions.dart';
-import '../models/shopping-list.dart';
-import 'circle-button.dart';
-import 'info-with-icon.dart';
+
+import '../models/models.dart';
+import '../widgets/widgets.dart';
+import '../extensions/extensions.dart';
 
 class ShoppingListCard extends StatelessWidget {
   final ShoppingList list;

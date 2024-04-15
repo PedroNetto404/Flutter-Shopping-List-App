@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/constants/app-route.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth-provider.dart';
-import '../widgets/layout.dart';
+
+import '../providers/providers.dart';
+import '../widgets/widgets.dart';
+import '../constants/constants.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -21,7 +21,7 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _userAvatar() => Consumer<AuthProvider>(builder:
           (BuildContext context, AuthProvider provider, Widget? child) {
-        final pictureUrl = provider.currentUser.photoURL;
+        final pictureUrl = provider.currentUser!.photoURL;
 
         return SizedBox(
             width: MediaQuery.of(context).size.width * 0.5,
@@ -64,32 +64,27 @@ class ProfileScreen extends StatelessWidget {
           children: [
             const Icon(Icons.person),
             const SizedBox(width: 8),
-            Text(authProvider.currentUser.displayName!)
+            Text(authProvider.currentUser!.displayName!)
           ],
         ),
         const SizedBox(height: 16),
         Row(children: [
           const Icon(Icons.email),
           const SizedBox(width: 8),
-          Text(authProvider.currentUser.email!)
+          Text(authProvider.currentUser!.email!)
         ])
       ]),
     );
   }
 
-  void _goToTakePictureScreen(
-          BuildContext context, AuthProvider authProvider) =>
-      AppRoute.navigateToTakePictureScreen(
-          context,
-          (fileBytes) async => authProvider
+  void _goToTakePictureScreen(BuildContext context, AuthProvider authProvider) =>
+      AppRoute.navigateTo(context, AppRoute.takePicture,
+          arguments: (fileBytes) async => authProvider
               .updateProfilePicture(fileBytes)
               .then((value) => Navigator.pop(context))
-              .then((value) => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      backgroundColor: Colors.greenAccent,
-                      content: Text('Foto de perfil atualizada com sucesso!'))))
-              .catchError((_) => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      backgroundColor: Colors.redAccent,
-                      content: Text('Erro ao salvar a foto de perfil.')))));
+              .then((value) => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  backgroundColor: Colors.greenAccent,
+                  content: Text('Foto de perfil atualizada com sucesso!'))))
+              .catchError((_) => ScaffoldMessenger.of(context)
+                  .showSnackBar(const SnackBar(backgroundColor: Colors.redAccent, content: Text('Erro ao salvar a foto de perfil.')))));
 }
