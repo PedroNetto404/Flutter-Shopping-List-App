@@ -6,15 +6,18 @@ class ShoppingListDialog extends StatelessWidget {
   final ShoppingList? _list;
   final _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final Future<void> Function(String name) onSaveAsync;
+  final Function(String name) onSaveAsync;
+  final String? Function(String? name) nameValidator;
 
-  ShoppingListDialog.createList({super.key, required this.onSaveAsync})
+  ShoppingListDialog.createList(
+      {super.key, required this.onSaveAsync, required this.nameValidator})
       : _list = null;
 
   ShoppingListDialog.updateList({
     super.key,
     required ShoppingList list,
     required this.onSaveAsync,
+    required this.nameValidator,
   }) : _list = list {
     _nameController.text = list.name;
   }
@@ -33,10 +36,7 @@ class ShoppingListDialog extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancelar')),
           OutlinedButton(
-              onPressed: () {
-                onSavedPressed(context);
-                Navigator.pop(context);
-              },
+              onPressed: () => onSavedPressed(context),
               child: const Text("Salvar")),
         ],
         content: Padding(
@@ -48,13 +48,12 @@ class ShoppingListDialog extends StatelessWidget {
               decoration: const InputDecoration(
                 labelText: 'Nome da lista',
                 hintText: 'Ex: Compras de terça',
+                errorMaxLines: 3,
                 prefixIcon: Icon(Icons.list),
               ),
               autovalidateMode: AutovalidateMode.onUserInteraction,
-              validator: (value) {
-                if (value!.isEmpty) return 'Nome da lista não pode ser vazio';
-                return null;
-              },
+              
+              validator: nameValidator,
               onFieldSubmitted: (_) => onSavedPressed(context),
             ),
           ),

@@ -194,25 +194,35 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
   void _onAddPressed(BuildContext context) => showDialog(
       context: context,
-      builder: (context) =>
-          ShoppingListDialog.createList(onSaveAsync: (String name) async {
-            final provider = context.read<ShoppingListProvider>();
+      builder: (context) {
+        final provider = context.read<ShoppingListProvider>();
 
-            final listWithSameName = provider.lists
-                .where((element) => element.name == name)
-                .firstOrNull;
-            if (listWithSameName != null) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Já existe uma lista com o nome $name'),
-                  backgroundColor: Colors.red));
-              return;
+        return ShoppingListDialog.createList(
+          onSaveAsync: (String name) async {
+            await provider
+                .addShoppingList(name)
+                .then((_) => Navigator.of(context).pop())
+                .catchError((error) => ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(
+                        content: Text('Erro ao adicionar lista: $error'),
+                        backgroundColor: Colors.red)));
+          },
+          nameValidator: (String? name) {
+            final basicValidationResult = _validateListName(name);
+            if (basicValidationResult != null) {
+              return basicValidationResult;
             }
 
-            await provider.addShoppingList(name).catchError((error) =>
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('Erro ao adicionar lista: $error'),
-                    backgroundColor: Colors.red)));
-          }));
+            final listWithSameName = provider.lists
+                .where((element) => element.name.equalsIgnoreCase(name!))
+                .firstOrNull;
+
+            return listWithSameName != null
+                ? 'Já existe uma lista com o nome $name'
+                : null;
+          },
+        );
+      });
 
   void _onCheckboxTap(BuildContext context, ShoppingList list) {
     var provider = context.read<ShoppingListProvider>();
@@ -245,7 +255,11 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
               .catchError((error) => ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                       content: Text('Erro ao atualizar lista: $error'),
-                      backgroundColor: Colors.red)))));
+                      backgroundColor: Colors.red))),
+          nameValidator: _validateListName));
+
+  String? _validateListName(String? name) =>
+      name == null || name.isEmpty ? 'Nome da lista não pode ser vazio' : null;
 
   void _onDeletePressed(BuildContext context, ShoppingList list) => showDialog(
       context: context,

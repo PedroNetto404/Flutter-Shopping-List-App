@@ -75,7 +75,7 @@ class HomeScreen extends StatelessWidget {
             icon: const Icon(Icons.login),
             label: const Text('Entrar'),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           ElevatedButton.icon(
             onPressed: () => AppRoute.navigateTo(context, AppRoute.register),
             icon: const Icon(Icons.person_add),

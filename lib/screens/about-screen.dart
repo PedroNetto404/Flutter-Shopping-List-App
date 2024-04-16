@@ -67,18 +67,11 @@ class AboutScreen extends StatelessWidget {
       );
 
   Widget _developerPicture(context) => Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(200),
-          border: Border.all(color: Theme.of(context).primaryColor, width: 5),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(200),
-          child: Image.asset(
-            'assets/images/dev.jpg',
-            fit: BoxFit.cover,
-          ),
-        ),
-      );
+      width: MediaQuery.of(context).size.width * 0.7,
+      height: MediaQuery.of(context).size.width * 0.7,
+      clipBehavior: Clip.hardEdge,
+      decoration: const BoxDecoration(shape: BoxShape.circle),
+      child: Image.asset('assets/images/dev.jpg', fit: BoxFit.contain));
 
   Widget _sectionHeader(IconData icon, String text) => Column(
         children: [

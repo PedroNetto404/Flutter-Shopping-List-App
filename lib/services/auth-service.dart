@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'storage-service.dart';
 
@@ -43,6 +44,12 @@ class AuthService {
   }
 
   Future<void> signInWithGoogle() async {
+    if (kIsWeb) {
+      final provider = GoogleAuthProvider();
+      await _firebaseAuth.signInWithPopup(provider);
+      return;
+    }
+    
     final googleUser = await _googleSignIn.signIn();
     if (googleUser == null) return;
 

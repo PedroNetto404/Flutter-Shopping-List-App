@@ -1,10 +1,11 @@
+import 'package:camera/camera.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 
 import './constants/constants.dart';
 import './providers/providers.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,17 +25,21 @@ class MainApp extends StatelessWidget {
             ChangeNotifierProvider(create: (context) => ShoppingListProvider()),
             ChangeNotifierProvider(create: (context) => AuthProvider())
           ],
-          builder: (context, child) => Consumer2<ThemeProvider, AuthProvider>(
-              builder: (context, themeProvider, authProvider, child) =>
+          builder: (context, child) => Consumer<ThemeProvider>(
+              builder: (BuildContext context, ThemeProvider value,
+                      Widget? child) =>
                   MaterialApp(
-                      themeAnimationCurve: Curves.easeOutCirc,
-                      themeAnimationDuration: const Duration(milliseconds: 400),
+                      themeAnimationStyle: AnimationStyle(
+                          curve: Curves.easeInOut,
+                          duration: const Duration(milliseconds: 500), 
+                          reverseDuration: const Duration(milliseconds: 500),
+                          reverseCurve: Curves.easeInOut
+                      ),
                       debugShowCheckedModeBanner: false,
-                      initialRoute: authProvider.isAuthenticated
-                          ? AppRoute.shoppingList.value
-                          : AppRoute.home.value,
+                      initialRoute: AppRoute.home.value,
+                      routes: AppRoute.routesMap,
                       onGenerateRoute: AppRoute.onGenerateRoute,
-                      themeMode: themeProvider.themeMode,
+                      themeMode: value.themeMode,
                       theme: CustomTheme.lightTheme,
                       darkTheme: CustomTheme.darkTheme)));
 }

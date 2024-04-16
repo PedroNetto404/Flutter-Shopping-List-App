@@ -17,7 +17,7 @@ class AppRoute {
   static const takePicture = AppRoute._('/take-picture');
   static const profile = AppRoute._('/profile');
 
-  static final Map<String, Widget Function(BuildContext)> _routesMap = {
+  static final Map<String, Widget Function(BuildContext)> routesMap = {
     home.value: (context) => const HomeScreen(),
     login.value: (context) => LoginScreen(),
     forgotPassword.value: (context) => const ForgotPasswordScreen(),
@@ -25,7 +25,8 @@ class AppRoute {
     shoppingList.value: (context) => const ShoppingListScreen(),
     shoppingListDetails.value: (context) => const ShoppingListDetailsScreen(),
     about.value: (context) => const AboutScreen(),
-    profile.value: (context) => const ProfileScreen()
+    profile.value: (context) => const ProfileScreen(),
+    takePicture.value: (context) => const TakePictureScreen()
   };
 
   static Future<void> navigateTo(BuildContext context, AppRoute route,
@@ -36,7 +37,7 @@ class AppRoute {
       PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 800),
           pageBuilder: (context, animation, secondaryAnimation) =>
-              _routesMap[settings.name]?.call(context) ?? const HomeScreen(),
+              routesMap[settings.name]?.call(context) ?? const HomeScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) =>
               FadeTransition(
                   opacity: animation.drive(Tween(begin: 0.0, end: 1.0)
@@ -44,9 +45,7 @@ class AppRoute {
                   child: child),
           settings: settings);
 
-  static void navigateWithLoading(BuildContext context, AppRoute shoppingList) {
-    Navigator.of(context).push(MaterialPageRoute(
+  static void navigateWithLoading(BuildContext context, AppRoute route) => Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => ListifyProgressScreen(
-            nextScreenRoute: shoppingList, miliseconds: 3000)));
-  }
+            nextScreenRoute: route, miliseconds: 3000)));
 }

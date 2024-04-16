@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../providers/providers.dart';
 import '../widgets/widgets.dart';
@@ -23,35 +26,29 @@ class ProfileScreen extends StatelessWidget {
           (BuildContext context, AuthProvider provider, Widget? child) {
         final pictureUrl = provider.currentUser!.photoURL;
 
-        return SizedBox(
-            width: MediaQuery.of(context).size.width * 0.5,
-            height: MediaQuery.of(context).size.width * 0.5,
-            child: Container(
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(100),
-                    border: Border.all(
-                        color: Theme.of(context).colorScheme.primary,
-                        width: 6)),
-                child: CircleAvatar(
-                    radius: 50,
-                    backgroundImage:
-                        pictureUrl != null ? NetworkImage(pictureUrl) : null,
-                    backgroundColor: Colors.transparent,
-                    child: Center(
-                        child: pictureUrl != null
-                            ? IconButton(
-                                onPressed: () =>
-                                    _goToTakePictureScreen(context, provider),
-                                icon: Icon(Icons.edit,
-                                    color:
-                                        Theme.of(context).colorScheme.primary))
-                            : IconButton(
-                                onPressed: () =>
-                                    _goToTakePictureScreen(context, provider),
-                                icon: Icon(Icons.person_add,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .primary))))));
+        return GestureDetector(
+          onTap: () => _goToTakePictureScreen(context, provider),
+          child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.5,
+              height: MediaQuery.of(context).size.width * 0.5,
+              child: Container(
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                          color: Theme.of(context).colorScheme.primary,
+                          width: 6)),
+                  child: CircleAvatar(
+                      radius: 50,
+                      backgroundImage:
+                          pictureUrl != null ? NetworkImage(pictureUrl) : null,
+                      backgroundColor: Colors.transparent,
+                      child: Center(
+                          child: Icon(
+                            color: Theme.of(context).colorScheme.primary,
+                            pictureUrl != null
+                              ? FontAwesomeIcons.penToSquare
+                              : FontAwesomeIcons.camera))))),
+        );
       });
 
   Widget _userInfo(BuildContext context) {
@@ -77,14 +74,37 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _goToTakePictureScreen(BuildContext context, AuthProvider authProvider) =>
+  void _goToTakePictureScreen(
+          BuildContext context, AuthProvider authProvider) =>
       AppRoute.navigateTo(context, AppRoute.takePicture,
-          arguments: (fileBytes) async => authProvider
-              .updateProfilePicture(fileBytes)
-              .then((value) => Navigator.pop(context))
-              .then((value) => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  backgroundColor: Colors.greenAccent,
-                  content: Text('Foto de perfil atualizada com sucesso!'))))
-              .catchError((_) => ScaffoldMessenger.of(context)
-                  .showSnackBar(const SnackBar(backgroundColor: Colors.redAccent, content: Text('Erro ao salvar a foto de perfil.')))));
+          arguments: (imageBytes) =>
+              _handleImageBytes(context, authProvider, imageBytes));
+
+  Future<void> _handleImageBytes(
+      BuildContext context, AuthProvider authProvider, Uint8List bytes) async {
+    try {
+      await authProvider.updateProfilePicture(bytes);
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Row(children: [
+        Icon(FontAwesomeIcons.bug),
+        SizedBox(width: 8),
+        Text(
+            'Ops... ocorreu um erro ao atualizar a foto de perfil. Tente novamente mais tarde.')
+      ])));
+    } finally {
+      if (context.mounted) {
+        Navigator.of(context).pop();
+
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Row(children: [
+          Icon(FontAwesomeIcons.circleCheck),
+          SizedBox(width: 8),
+          Text('Foto de perfil atualizada com sucesso!')
+        ])));
+      }
+    }
+  }
 }
