@@ -1,11 +1,9 @@
-import 'package:camera/camera.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 
 import './constants/constants.dart';
 import './providers/providers.dart';
-
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,20 +24,14 @@ class MainApp extends StatelessWidget {
             ChangeNotifierProvider(create: (context) => AuthProvider())
           ],
           builder: (context, child) => Consumer<ThemeProvider>(
-              builder: (BuildContext context, ThemeProvider value,
+              builder: (BuildContext context, ThemeProvider themeProvider,
                       Widget? child) =>
                   MaterialApp(
-                      themeAnimationStyle: AnimationStyle(
-                          curve: Curves.easeInOut,
-                          duration: const Duration(milliseconds: 500), 
-                          reverseDuration: const Duration(milliseconds: 500),
-                          reverseCurve: Curves.easeInOut
-                      ),
                       debugShowCheckedModeBanner: false,
-                      initialRoute: AppRoute.home.value,
-                      routes: AppRoute.routesMap,
                       onGenerateRoute: AppRoute.onGenerateRoute,
-                      themeMode: value.themeMode,
-                      theme: CustomTheme.lightTheme,
-                      darkTheme: CustomTheme.darkTheme)));
+                      builder: (context, child) => AnimatedTheme(
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOut,
+                          data: themeProvider.currentTheme,
+                          child: child!))));
 }

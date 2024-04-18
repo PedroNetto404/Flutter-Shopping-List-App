@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../models/models.dart';
 
@@ -36,7 +37,9 @@ class ShoppingListDialog extends StatelessWidget {
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancelar')),
           OutlinedButton(
-              onPressed: () => onSavedPressed(context),
+              onPressed: () {
+                onSavedPressed(context);
+              },
               child: const Text("Salvar")),
         ],
         content: Padding(
@@ -49,7 +52,7 @@ class ShoppingListDialog extends StatelessWidget {
                 labelText: 'Nome da lista',
                 hintText: 'Ex: Compras de terça',
                 errorMaxLines: 3,
-                prefixIcon: Icon(Icons.list),
+                prefixIcon: Icon(FontAwesomeIcons.listCheck),
               ),
               autovalidateMode: AutovalidateMode.onUserInteraction,
               
@@ -65,6 +68,8 @@ class ShoppingListDialog extends StatelessWidget {
 
     final listName = _nameController.text.trim();
 
-    onSaveAsync(listName);
+    onSaveAsync(listName); 
+
+    Navigator.pop(context);
   }
 }

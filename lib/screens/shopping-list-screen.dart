@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:mobile_shopping_list_app/services/export-service.dart';
+import 'package:open_file/open_file.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/models.dart';
 import '../providers/providers.dart';
+import '../widgets/layout.dart';
 import '../widgets/widgets.dart';
 import '../extensions/extensions.dart';
 import '../constants/constants.dart';
@@ -16,30 +22,42 @@ class ShoppingListScreen extends StatefulWidget {
 class _ShoppingListScreenState extends State<ShoppingListScreen> {
   String _searchText = '';
   bool _dateAscending = true;
+  bool _showCompleted = false;
+
   late Future<void> _fetchFuture;
+  late ShoppingListProvider _provider;
 
   @override
   void initState() {
     super.initState();
 
-    _initFetch();
+    _provider = context.read<ShoppingListProvider>();
+    _fetchFuture = _fetchData();
   }
 
-  void _initFetch() => _fetchFuture = context
-      .read<ShoppingListProvider>()
-      .fetchLists()
-      .catchError((error) => ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Erro ao buscar listas: $error'),
-              backgroundColor: Colors.red)));
+  Future<void> _fetchData() async {
+    try {
+      await _provider.fetchLists();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(e);
+    }
+  }
 
   List<ShoppingList> _getFilteredLists(List<ShoppingList> lists) {
-    final filteredLists = _searchText.isEmpty
-        ? lists
-        : lists
-            .where((element) =>
-                element.name.toLowerCase().contains(_searchText.toLowerCase()))
-            .toList();
+    final filteredLists = lists.where((element) {
+      bool pass = true;
+
+      if (_searchText.isNotEmpty) {
+        pass = element.name.containsIgnoreCase(_searchText);
+      }
+
+      if (_showCompleted) {
+        pass = pass && element.completed;
+      }
+
+      return pass;
+    }).toList();
 
     filteredLists.sort((a, b) => a.name.compareTo(b.name));
 
@@ -53,116 +71,145 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Layout(
-      body: FutureBuilder(
-          future: _fetchFuture,
-          builder: (context, snapshot) => Consumer<ShoppingListProvider>(
-                  builder: (context, provider, child) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+  Widget build(BuildContext context) => PopScope(
+        canPop: false,
+        child: Layout(
+          body: FutureBuilder(
+              future: _fetchFuture,
+              builder: (context, snapshot) => Consumer<ShoppingListProvider>(
+                      builder: (context, provider, child) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                if (snapshot.hasError) {
-                  return Center(
-                      child: Row(
-                    children: [
-                      const Icon(Icons.error, color: Colors.red),
-                      const Text('Erro ao buscar listas...'),
-                      const SizedBox(width: 8),
-                      IconButton(
-                          icon: const Icon(Icons.refresh),
-                          onPressed: () => setState(() => _initFetch())),
-                    ],
-                  ));
-                }
+                    if (snapshot.hasError) {
+                      return Center(
+                          child: Row(
+                        children: [
+                          const Icon(Icons.error, color: Colors.red),
+                          const Text('Erro ao buscar listas...'),
+                          const SizedBox(width: 8),
+                          IconButton(
+                              icon: const Icon(Icons.refresh),
+                              onPressed: () => setState(() => _fetchData())),
+                        ],
+                      ));
+                    }
 
-                final lists = provider.lists;
+                    final lists = provider.lists;
 
-                if (lists.isEmpty) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.shopping_cart, size: 100),
-                        SizedBox(height: 16),
-                        Text('Nenhuma lista adicionada ainda...'),
-                      ],
-                    ),
-                  );
-                }
+                    if (lists.isEmpty) {
+                      return EmptyBanner(
+                          onTap: _onAddPressed,
+                          message:
+                              'Nenhuma lista adicionada...\nToque aqui para iniciar!',
+                          icon: FontAwesomeIcons.rectangleList);
+                    }
 
-                final filteredLists = _getFilteredLists(lists);
+                    final filteredLists = _getFilteredLists(lists);
 
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      _filterSection(),
-                      _infoSection(lists),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: filteredLists.length,
-                          itemBuilder: (context, index) {
-                            final list = filteredLists[index];
-                            return ShoppingListCard(
-                                list: filteredLists[index],
-                                onDeletePressed: () =>
-                                    _onDeletePressed(context, list),
-                                onCheckPressed: () =>
-                                    _onCheckboxTap(context, list),
-                                onEditPressed: () =>
-                                    _onEditPressed(context, list),
-                                onTap: () => _onTap(context, list.id));
-                          },
-                        ),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Column(
+                        children: [
+                          _filterSection(context),
+                          _infoSection(lists),
+                          Expanded(
+                            child: GridView.builder(
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: _getGridColumnsCount(context),
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                              ),
+                              itemCount: filteredLists.length,
+                              itemBuilder: (context, index) {
+                                final list = filteredLists[index];
+                                return ShoppingListCard(
+                                    list: filteredLists[index],
+                                    onDownloadPressed: () =>
+                                        _onDownloadPressed(list),
+                                    onDeletePressed: () =>
+                                        _onDeletePressed(list),
+                                    onEditPressed: () => _onEditPressed(list),
+                                    onTap: () => Navigator.pushNamed(
+                                        context, AppRoute.shoppingListDetails,
+                                        arguments: list.id),
+                                    onCopyPressed: () => _onCopyPressed(list));
+                              },
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                );
-              })),
-      floatingActionButton: FloatingActionButton(
-          onPressed: () => _onAddPressed(context),
-          child: const Icon(Icons.playlist_add)));
+                    );
+                  })),
+        ),
+      );
 
-  Widget _filterSection() => Card(
+  Widget _filterSection(context) => Card(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(8),
           child: Column(
             mainAxisSize: MainAxisSize.max,
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.0),
-                child: Text('📝 Minhas Listas',
-                    style:
-                        TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('📝 Minhas Listas',
+                        style: TextStyle(
+                            fontSize: 21, fontWeight: FontWeight.bold)),
+                    IconButton(
+                        onPressed: _onAddPressed,
+                        icon: Icon(FontAwesomeIcons.circlePlus,
+                            size: 24,
+                            color: Theme.of(context).colorScheme.primary)),
+                  ],
+                ),
               ),
               const Divider(),
               Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: Row(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: TextField(
-                        onChanged: (value) =>
-                            setState(() => _searchText = value),
-                        decoration: const InputDecoration(
-                            hintText: 'Digite o nome da lista',
-                            labelText: 'Buscar lista',
-                            prefixIcon: Icon(Icons.search)),
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            onChanged: (value) =>
+                                setState(() => _searchText = value),
+                            decoration: const InputDecoration(
+                                hintText: 'Digite o nome da lista',
+                                labelText: 'Buscar lista',
+                                prefixIcon: Icon(Icons.search)),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        IconButton(
+                            onPressed: () => setState(
+                                () => _dateAscending = !_dateAscending),
+                            icon: Row(
+                              children: [
+                                const Icon(Icons.calendar_today),
+                                Icon(_dateAscending
+                                    ? Icons.arrow_downward
+                                    : Icons.arrow_upward),
+                              ],
+                            ))
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    IconButton(
-                        onPressed: () =>
-                            setState(() => _dateAscending = !_dateAscending),
-                        icon: Row(
-                          children: [
-                            const Icon(Icons.calendar_today),
-                            Icon(_dateAscending
-                                ? Icons.arrow_downward
-                                : Icons.arrow_upward),
-                          ],
-                        ))
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        const Text('Listas concluídas'),
+                        const SizedBox(width: 8),
+                        Switch(
+                            value: _showCompleted,
+                            onChanged: (value) =>
+                                setState(() => _showCompleted = value)),
+                      ],
+                    )
                   ],
                 ),
               ),
@@ -192,101 +239,128 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
         ),
       );
 
-  void _onAddPressed(BuildContext context) => showDialog(
+  void _onAddPressed() => showDialog(
       context: context,
-      builder: (context) {
+      builder: (_) {
         final provider = context.read<ShoppingListProvider>();
+        final authProvider = context.read<AuthProvider>();
 
         return ShoppingListDialog.createList(
           onSaveAsync: (String name) async {
-            await provider
-                .addShoppingList(name)
-                .then((_) => Navigator.of(context).pop())
-                .catchError((error) => ScaffoldMessenger.of(context)
-                    .showSnackBar(SnackBar(
-                        content: Text('Erro ao adicionar lista: $error'),
-                        backgroundColor: Colors.red)));
+            try {
+              await provider.addShoppingList(
+                  name, authProvider.currentUser!.uid);
+              if (!mounted) return;
+
+              ScaffoldMessenger.of(context)
+                  .showSuccessSnackBar('Lista "$name" adicionada!');
+            } catch (e) {
+              if (!mounted) return;
+
+              ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(e);
+            }
           },
           nameValidator: (String? name) {
-            final basicValidationResult = _validateListName(name);
-            if (basicValidationResult != null) {
-              return basicValidationResult;
-            }
-
             final listWithSameName = provider.lists
-                .where((element) => element.name.equalsIgnoreCase(name!))
+                .where((element) => element.name.containsIgnoreCase(name!))
                 .firstOrNull;
 
             return listWithSameName != null
                 ? 'Já existe uma lista com o nome $name'
-                : null;
+                : _validateListName(name);
           },
         );
       });
 
-  void _onCheckboxTap(BuildContext context, ShoppingList list) {
-    var provider = context.read<ShoppingListProvider>();
-
-    Future<void> future;
-
-    if (!list.completed) {
-      future = provider.completeShoppingList(list.id);
-
-      showDialog(
-          context: context,
-          builder: (context) => ListCompletedDialog(listName: list.name));
-    } else {
-      future = provider.resetShoppingList(list.id);
-    }
-
-    future.catchError((error) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('Erro ao atualizar lista: $error'),
-            backgroundColor: Colors.red)));
-  }
-
-  void _onEditPressed(BuildContext context, ShoppingList list) => showDialog(
+  void _onEditPressed(ShoppingList list) => showDialog(
       context: context,
-      builder: (context) => ShoppingListDialog.updateList(
+      builder: (_) => ShoppingListDialog.updateList(
           list: list,
-          onSaveAsync: (String name) => context
-              .read<ShoppingListProvider>()
-              .updateShoppingListName(list.id, name)
-              .catchError((error) => ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text('Erro ao atualizar lista: $error'),
-                      backgroundColor: Colors.red))),
+          onSaveAsync: (String name) async {
+            try {
+              await _provider.updateShoppingListName(list.id, name);
+              if (!mounted) return;
+
+              ScaffoldMessenger.of(context)
+                  .showSuccessSnackBar('Lista atualizada!');
+            } catch (e) {
+              if (!mounted) return;
+
+              ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(e);
+            }
+          },
           nameValidator: _validateListName));
 
   String? _validateListName(String? name) =>
       name == null || name.isEmpty ? 'Nome da lista não pode ser vazio' : null;
 
-  void _onDeletePressed(BuildContext context, ShoppingList list) => showDialog(
+  void _onDeletePressed(ShoppingList list) => showDialog(
       context: context,
-      builder: (context) => DeleteConfirmationDialog(
+      builder: (_) => DeleteConfirmationDialog(
           title: const Row(children: [
             Icon(Icons.warning, color: Colors.red),
             SizedBox(width: 8),
             Text('Remover Lista')
           ]),
-          content: Row(children: [
-            const Text('Tem certeza que deseja remover a lista '),
-            Text(list.name.capitalize(),
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.blue)),
-            const Text('?')
-          ]),
-          onConfirm: () => _onConfirmDelete(context, list.id)));
+          content: Text('Deseja remover a lista "${list.name}"?',
+              style: const TextStyle(overflow: TextOverflow.clip)),
+          onConfirm: () => _onConfirmDelete(list)));
 
-  void _onConfirmDelete(BuildContext context, String listId) => context
-      .read<ShoppingListProvider>()
-      .removeShoppingList(listId)
-      .catchError((error) => ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Erro ao remover lista: $error'),
-              backgroundColor: Colors.red)));
+  void _onConfirmDelete(ShoppingList list) async {
+    try {
+      await _provider.removeShoppingList(list.id);
+      if (!mounted) return;
 
-  void _onTap(BuildContext context, String listId) =>
-      AppRoute.navigateTo(context, AppRoute.shoppingListDetails,
-          arguments: listId);
+      ScaffoldMessenger.of(context).showSuccessSnackBar('Lista removida!');
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(e);
+    }
+  }
+
+  void _onDownloadPressed(ShoppingList list) async {
+    try {
+      if(list.isEmpty) {
+        ScaffoldMessenger.of(context).showWarningSnackBar('Lista vazia... Adicione itens para exportar!');
+        return;
+      }
+
+      final exportService = ExportService();
+
+      final filePath = await exportService.exportListInPDF(list);
+
+      if (!mounted) return;
+
+      if(!kIsWeb) {
+        final storagePermissionStatus = await Permission.storage.status;
+        if (!storagePermissionStatus.isGranted) {
+          await Permission.storage.request();
+        }
+      }
+
+      await OpenFile.open(filePath);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(e);
+    }
+  }
+
+  _onCopyPressed(ShoppingList list) async {
+    if (list.items.isEmpty) {
+      ScaffoldMessenger.of(context).showWarningSnackBar('Lista vazia... Adicione itens para copiar!');
+      return;
+    }
+
+    await Clipboard.setData(ClipboardData(text: list.toString()));
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSuccessSnackBar('Lista copiada!');
+  }
+
+  int _getGridColumnsCount(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    return width ~/ 200;
+  }
 }

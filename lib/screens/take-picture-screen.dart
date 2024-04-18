@@ -3,6 +3,8 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../extensions/extensions.dart';
+
 typedef PictureHandler = Future<void> Function(Uint8List);
 
 class TakePictureScreen extends StatefulWidget {
@@ -12,111 +14,198 @@ class TakePictureScreen extends StatefulWidget {
   TakePictureScreenState createState() => TakePictureScreenState();
 }
 
-//TODO: Trocar para futureBuilder e gerenciar melhor o código assíncrono. 
-// Está estourando algumas exceções indevidas
-class TakePictureScreenState extends State<TakePictureScreen> {
-  List<CameraDescription>? _cameras;
-  CameraController? _cameraController;
+class TakePictureScreenState extends State<TakePictureScreen>
+    with WidgetsBindingObserver {
+  final List<CameraDescription> _camerasDescriptions = [];
+  CameraController? _currentCameraController;
+
   int _selectedCameraIndex = 0;
-  bool _isInitialized = false;
+  bool _takingPicture = false;
+  bool _currentCameraInitialized = false;
+
+  get _currentCameraDescription => _camerasDescriptions[_selectedCameraIndex];
 
   @override
   void initState() {
     super.initState();
-    _initializeCameras();
-  }
-
-  Future<void> _initializeCameras() async {
-    _cameras = await availableCameras();
-    if (_cameras != null && _cameras!.isNotEmpty) {
-      await _initializeCameraController(_cameras!.first);
-    }
-  }
-
-  Future<void> _initializeCameraController(
-      CameraDescription cameraDescription) async {
-    _cameraController =
-        CameraController(cameraDescription, ResolutionPreset.medium);
-    await _cameraController!.initialize();
-    setState(() {
-      _isInitialized = true;
-    });
+    WidgetsBinding.instance.addObserver(this);
+    _init();
   }
 
   @override
   void dispose() {
-    _cameraController?.dispose();
+    _currentCameraController?.dispose();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Take a Picture")),
-      body: _isInitialized
-          ? _cameraPreview()
-          : const Center(child: CircularProgressIndicator()),
-      bottomNavigationBar: _cameraControls(),
-    );
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_currentCameraController == null ||
+        !_currentCameraController!.value.isInitialized) return;
+
+    if (state == AppLifecycleState.inactive) {
+      _currentCameraController!.dispose();
+      return;
+    }
+
+    if (state != AppLifecycleState.resumed) return;
+
+    _changeCurrentCamera();
   }
 
-  Widget _cameraPreview() => Center(
-        child: Container(
-            margin: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-                border: Border.all(
-                    width: 2, color: Theme.of(context).colorScheme.primary)),
-            child: CameraPreview(_cameraController!)),
+  @override
+  Widget build(BuildContext context) => Scaffold(
+      appBar: AppBar(title: const Text("Tire uma foto")),
+      body: _currentCameraInitialized && !_takingPicture
+          ? Column(
+              children: [
+                _title(),
+                _cameraPreview(),
+              ],
+            )
+          : const Center(child: CircularProgressIndicator()),
+      bottomNavigationBar: _cameraControls());
+
+  Widget _title() => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(FontAwesomeIcons.faceSmileBeam,
+              size: 32, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 8),
+          const Text('Sorria!',
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+        ],
       );
 
-  Widget _cameraControls() {
-    return Padding(
+  Widget _cameraPreview() => Expanded(
+        child: Center(
+          child: Container(
+              margin: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                  border: Border.all(
+                      width: 2, color: Theme.of(context).colorScheme.primary)),
+              child: CameraPreview(_currentCameraController!)),
+        ),
+      );
+
+  Widget _cameraControls() => Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
+        if (_camerasDescriptions.length > 1)
           FloatingActionButton(
-            onPressed: _switchCamera,
-            child: const Icon(Icons.switch_camera),
-          ),
-          FloatingActionButton(
-            onPressed: _takePicture,
-            child: const Icon(Icons.camera),
-          )
-        ],
-      ),
-    );
+              onPressed: () {
+                setState(() {
+                  _selectedCameraIndex =
+                      (_selectedCameraIndex + 1) % _camerasDescriptions.length;
+                  _currentCameraInitialized = false;
+                });
+                _changeCurrentCamera();
+              },
+              child: const Icon(Icons.switch_camera)),
+        FloatingActionButton(
+            onPressed: _takePicture, child: const Icon(FontAwesomeIcons.camera))
+      ]));
+
+  Future<void> _init() async {
+    _camerasDescriptions.addAll(await availableCameras());
+
+    await _changeCurrentCamera();
   }
 
-  void _switchCamera() {
-    if (_cameras == null || _cameras!.length <= 1) return;
-    _selectedCameraIndex = (_selectedCameraIndex + 1) % _cameras!.length;
-    _initializeCameraController(_cameras![_selectedCameraIndex]);
-  }
+  Future<void> _changeCurrentCamera() async {
+    try {
+      if (_currentCameraController != null) {
+        await _currentCameraController!
+            .setDescription(_currentCameraDescription);
+      } else {
+        _currentCameraController = CameraController(
+          _currentCameraDescription,
+          ResolutionPreset.high,
+          enableAudio: false,
+        );
+      }
 
-  void _takePicture() async {
-    if (!_isInitialized || _cameraController == null) return;
-
-    final imageFile = await _cameraController!.takePicture();
-
-    Uint8List imageBytes = await imageFile.readAsBytes();
+      await _currentCameraController!.initialize();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(error);
+    }
 
     if (!mounted) return;
 
-    final pictureHandler =
-        ModalRoute.of(context)!.settings.arguments as PictureHandler;
+    setState(() => _currentCameraInitialized =
+        _currentCameraController!.value.isInitialized);
 
-    await Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => ImagePreviewScreen(
-            imageData: imageBytes,
-            onAccept: () => pictureHandler(imageBytes)
-                .then((_) => Navigator.of(context).pop())
-                .catchError((error) => Navigator.of(context).pop()),
-            onReject: () => Navigator.of(context).pop())));
+    if (!_currentCameraController!.hasListeners) {
+      _currentCameraController!.addListener(() {
+        setState(() {});
+
+        if (_currentCameraController!.value.hasError) {
+          ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(
+              _currentCameraController!.value.errorDescription!);
+        }
+      });
+    }
+  }
+
+  Future<void> _takePicture() async {
+    if (_currentCameraController == null ||
+        !_currentCameraController!.value.isInitialized ||
+        _takingPicture) return;
+
+    setState(() => _takingPicture = true);
+
+    try {
+      final imageFile = await _currentCameraController!.takePicture();
+
+      final imageBytes = await imageFile.readAsBytes();
+
+      if (!mounted) return;
+
+      await Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => ImagePreviewScreen(
+              imageData: imageBytes,
+              onAccept: () => _onAcceptPicture(imageBytes),
+              onReject: () {
+                if (_takingPicture) return;
+
+                Navigator.of(context).pop();
+              })));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(e);
+    }
+
+    if (!mounted) return;
+
+    setState(() => _takingPicture = false);
+  }
+
+  void _onAcceptPicture(Uint8List imageBytes) async {
+    if (!mounted) return;
+
+    try {
+      final pictureHandler =
+          ModalRoute.of(context)!.settings.arguments as PictureHandler;
+
+      await pictureHandler(imageBytes);
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(e);
+    } finally {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    }
   }
 }
 
-class ImagePreviewScreen extends StatelessWidget {
+class ImagePreviewScreen extends StatefulWidget {
   final Uint8List imageData;
   final VoidCallback onAccept;
   final VoidCallback onReject;
@@ -128,44 +217,68 @@ class ImagePreviewScreen extends StatelessWidget {
       required this.onReject});
 
   @override
+  State<ImagePreviewScreen> createState() => _ImagePreviewScreenState();
+}
+
+class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
+  bool _savingImage = false;
+
+  @override
   Widget build(BuildContext context) => Scaffold(
       appBar: AppBar(title: const Text("Veja a foto")),
       body: Center(
-          child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(FontAwesomeIcons.camera,
-                size: 32, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 16),
-            const Text('Você gostou?',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-          ]),
-          Container(
-              margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                  border: Border.all(
-                      width: 2, color: Theme.of(context).colorScheme.primary)),
-              child: Image.memory(imageData)),
-        ],
-      )),
+          child: _savingImage
+              ? const CircularProgressIndicator()
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(FontAwesomeIcons.camera,
+                          size: 32,
+                          color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: 16),
+                      const Text('Você gostou?',
+                          style: TextStyle(
+                              fontSize: 32, fontWeight: FontWeight.bold)),
+                    ]),
+                    Expanded(
+                      child: Container(
+                          margin: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                              border: Border.all(
+                                  width: 2,
+                                  color:
+                                      Theme.of(context).colorScheme.primary)),
+                          child: Image.memory(widget.imageData)),
+                    ),
+                  ],
+                )),
       bottomNavigationBar: _buttons(context));
 
   Widget _buttons(BuildContext context) => Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
         TextButton(
-            onPressed: onReject,
+            onPressed: widget.onReject,
             child: const Row(children: [
               Icon(FontAwesomeIcons.thumbsDown),
               SizedBox(width: 8),
               Text("Não!")
             ])),
         OutlinedButton(
-          onPressed: onAccept,
-          child: const Row(
-              children: [Icon(FontAwesomeIcons.thumbsUp
-              ), SizedBox(width: 8), Text("Sim!")]),
-        )
+            onPressed: () {
+              if (_savingImage) return;
+
+              setState(() {
+                _savingImage = true;
+              });
+
+              widget.onAccept();
+            },
+            child: const Row(children: [
+              Icon(FontAwesomeIcons.thumbsUp),
+              SizedBox(width: 8),
+              Text("Sim!")
+            ]))
       ]));
 }

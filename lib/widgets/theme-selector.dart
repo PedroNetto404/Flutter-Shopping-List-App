@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import '../providers/providers.dart';
+import '../constants/constants.dart';
 
 class ThemeSelector extends StatelessWidget {
   const ThemeSelector({super.key});
@@ -9,8 +11,7 @@ class ThemeSelector extends StatelessWidget {
       builder: (BuildContext context, ThemeProvider provider, Widget? child) =>
           Switch(
               activeThumbImage: const AssetImage('assets/images/moon.png'),
-              inactiveThumbImage: const AssetImage(
-                  'assets/images/sun.png'), //TODO: o sol está com uma borda cinza. Procurar outra imagem
-              value: provider.themeMode == ThemeMode.dark,
+              inactiveThumbImage: const AssetImage('assets/images/sun.png'),
+              value: provider.currentTheme == CustomTheme.darkTheme ? true : false,
               onChanged: (_) => provider.toggleTheme()));
 }

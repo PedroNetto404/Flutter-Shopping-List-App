@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/models/enums/unit-type.dart';
-import 'package:mobile_shopping_list_app/models/shopping-list.dart';
 
 import '../services/services.dart';
+import '../models/models.dart';
 
 class ShoppingListProvider extends ChangeNotifier {
   final _shoppingListRepository = ShoppingListRepository();
@@ -25,9 +24,9 @@ class ShoppingListProvider extends ChangeNotifier {
     _lists.addAll(lists);
   }
 
-  Future<void> addShoppingList(String name) async {
+  Future<void> addShoppingList(String name, String userId) async {
     final shoppingList =
-        ShoppingList.create(userId: _auth.currentUser!.uid, name: name);
+        ShoppingList.create(userId: userId, name: name);
 
     await _shoppingListRepository.create(shoppingList);
     _lists.add(shoppingList);
@@ -60,30 +59,10 @@ class ShoppingListProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> removeItemFromShoppingList({
-    required String listId,
-    required String itemName,
-  }) async {
-    final shoppingList = _lists.firstWhere((element) => element.id == listId);
-    shoppingList.removeItem(itemName);
-
-    await _shoppingListRepository.update(shoppingList);
-
-    notifyListeners();
-  }
-
-  Future<void> completeShoppingList(String id) async {
-    final shoppingList = _lists.firstWhere((element) => element.id == id);
-    shoppingList.complete();
-
-    await _shoppingListRepository.update(shoppingList);
-
-    notifyListeners();
-  }
-
-  Future<void> resetShoppingList(String id) async {
-    final shoppingList = _lists.firstWhere((element) => element.id == id);
-    shoppingList.reset();
+  Future<void> removeItemFromShoppingList(ShoppingItem item) async {
+    final shoppingList =
+        _lists.firstWhere((element) => element.id == item.listId);
+    shoppingList.removeItem(item);
 
     await _shoppingListRepository.update(shoppingList);
 
@@ -106,7 +85,8 @@ class ShoppingListProvider extends ChangeNotifier {
       required double newQuantity,
       required UnitType newUnitType,
       required String newCategory,
-      String? newNote}) async {
+      String? newNote,
+      double? newPrice}) async {
     final shoppingList = _lists.firstWhere((element) => element.id == listId);
     final item = shoppingList.items
         .firstWhere((element) => element.name == previousItemName);
@@ -116,27 +96,20 @@ class ShoppingListProvider extends ChangeNotifier {
     item.unityType = newUnitType;
     item.category = newCategory;
     item.note = newNote;
+    if (newPrice != null) item.price = newPrice;
 
     await _shoppingListRepository.update(shoppingList);
 
     notifyListeners();
   }
 
-  Future<void> toggleItemPurchase(
-      String shoppingListId, String itemName) async {
+  Future<void> buyItem(
+      ShoppingItem item, double newQuantity, double price) async {
     final shoppingList =
-        _lists.firstWhere((element) => element.id == shoppingListId);
-    final item =
-        shoppingList.items.firstWhere((element) => element.name == itemName);
+        _lists.firstWhere((element) => element.id == item.listId);
 
-    if (item.purchased) {
-      item.unPurchase();
-    } else {
-      item.purchase();
-    }
+    item.purchase(newQuantity, price);
 
-    await _shoppingListRepository.update(shoppingList);
-
-    notifyListeners();
+    return _shoppingListRepository.update(shoppingList);
   }
 }

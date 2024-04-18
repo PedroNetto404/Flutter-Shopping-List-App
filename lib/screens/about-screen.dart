@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../widgets/layout.dart';
 import '../widgets/widgets.dart';
 
 class AboutScreen extends StatelessWidget {
@@ -8,28 +8,27 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Layout(
           body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Center(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _appSection(),
-                const SizedBox(height: 20),
-                _developerSection(),
-                const SizedBox(height: 20),
-                _developerPicture(context),
-              ],
-            ),
+              child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _appSection(),
+              const SizedBox(height: 20),
+              _developerSection(),
+              const SizedBox(height: 20),
+              _developerPicture(context),
+            ],
           ),
         ),
-      ));
+      )));
 
   Widget _appSection() => Column(
         children: [
           _sectionHeader(Icons.info, 'Sobre o aplicativo:'),
           const Padding(
-              padding: EdgeInsets.only(left: 20),
+              padding: EdgeInsets.only(left: 10),
               child: Column(
                 children: [
                   InfoWithIcon(
@@ -51,7 +50,7 @@ class AboutScreen extends StatelessWidget {
         children: [
           _sectionHeader(Icons.developer_mode, 'Desenvolvido por:'),
           const Padding(
-              padding: EdgeInsets.only(left: 20),
+              padding: EdgeInsets.only(left: 10),
               child: Column(
                 children: [
                   InfoWithIcon(
@@ -67,8 +66,8 @@ class AboutScreen extends StatelessWidget {
       );
 
   Widget _developerPicture(context) => Container(
-      width: MediaQuery.of(context).size.width * 0.7,
-      height: MediaQuery.of(context).size.width * 0.7,
+      width: 300,
+      height: 300,
       clipBehavior: Clip.hardEdge,
       decoration: const BoxDecoration(shape: BoxShape.circle),
       child: Image.asset('assets/images/dev.jpg', fit: BoxFit.contain));
@@ -79,8 +78,6 @@ class AboutScreen extends StatelessWidget {
             children: [
               Icon(icon, size: 24),
               const SizedBox(width: 8),
-              // _ClippedText(
-              //     text: text, fontSize: 28, fontWeight: FontWeight.bold),
               Text(text,
                   style: const TextStyle(
                       fontSize: 28,

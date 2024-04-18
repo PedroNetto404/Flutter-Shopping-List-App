@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 
-import '../constants/constants.dart';
-
 class Link extends StatelessWidget {
-  final AppRoute route;
+  final String route;
   final String label;
 
   const Link({super.key, required this.route, required this.label});
 
   @override
   Widget build(BuildContext context) => TextButton(
-        style: TextButton.styleFrom(
-          alignment: Alignment.centerLeft,
-          textStyle: const TextStyle(
-            fontSize: 16,
-          ),
-          padding: const EdgeInsets.all(0),
+      style: TextButton.styleFrom(
+        alignment: Alignment.centerLeft,
+        textStyle: const TextStyle(
+          fontSize: 16,
         ),
-        onPressed: () => AppRoute.navigateTo(context, route),
-        child: Text(label),
-      );
+        padding: const EdgeInsets.all(0),
+      ),
+      onPressed: () => Navigator.pushNamed(context, route),
+      child: Text(label));
 }

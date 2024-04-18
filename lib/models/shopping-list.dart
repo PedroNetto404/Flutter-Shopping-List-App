@@ -1,5 +1,7 @@
 import 'dart:collection';
 
+import 'package:mobile_shopping_list_app/extensions/extensions.dart';
+
 import './enums/unit-type.dart';
 import 'shopping-item.dart';
 
@@ -15,7 +17,18 @@ class ShoppingList {
 
   String get id => _id;
 
-  get createdAt => _createdAt;
+  DateTime get createdAt => _createdAt;
+
+  bool get isEmpty => _items.isEmpty;
+
+  double? get totalPrice {
+    if (_items.isEmpty || _items.any((element) => element.price == null)) {
+      return null;
+    }
+
+    return _items.fold(
+        0.0, (previousValue, item) => previousValue! + (item.totalPrice!));
+  }
 
   set id(String value) {
     if (_id.isNotEmpty) {
@@ -45,7 +58,7 @@ class ShoppingList {
     required String userId,
     required String name,
   })  : _userId = userId,
-        _name = name,
+        _name = name.capitalize(),
         _createdAt = DateTime.now();
 
   ShoppingList.fromJson(Map<String, dynamic> json)
@@ -56,7 +69,7 @@ class ShoppingList {
     _items.addAll((json['items'] as List).map((e) => ShoppingItem.fromJson(e)));
   }
 
-  bool get completed => items.every((element) => element.purchased);
+  bool get completed => !isEmpty && _items.every((element) => element.purchased);
 
   void addItem(
       {required String name,
@@ -74,6 +87,7 @@ class ShoppingList {
     }
 
     var item = ShoppingItem.create(
+      listId: _id,
       name: name,
       category: category,
       quantity: quantity,
@@ -84,19 +98,7 @@ class ShoppingList {
     _items.add(item);
   }
 
-  void removeItem(String itemName) => _items.removeWhere((element) => element.name == itemName);
-
-  void complete() {
-    for (var element in _items) {
-      element.purchase();
-    }
-  }
-
-  void reset() {
-    for (var element in _items) {
-      element.unPurchase();
-    }
-  }
+  void removeItem(ShoppingItem item) => _items.remove(item);
 
   toJson() => {
         'user_id': userId,
@@ -104,4 +106,15 @@ class ShoppingList {
         'created_at': createdAt,
         'items': _items.map((e) => e.toJson()).toList(),
       };
+
+  @override
+  String toString() => '*Lista de compras:* $name\n\n'
+      '\t*Criada em:* ${_createdAt.toLocal()}\n'
+      '\t*Itens:* ${_items.length}\n'
+      '\t*Total:* ${totalPrice == null ? '...' : totalPrice!.toCurrency()}\n'
+      '\t*Concluída:* ${completed ? 'Sim' : 'Não'}\n\n'
+      '\n\n*Itens:*\n\n'
+      '${_items.map(_mapItemToString).join('\n')}';
+
+  String _mapItemToString(ShoppingItem item) => '\t\t${_items.indexOf(item) + 1}. $item';
 }

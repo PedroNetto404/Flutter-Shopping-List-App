@@ -13,10 +13,10 @@ class InfoWithIcon extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Icon(icon, size: 16),
-            const SizedBox(width: 4),
+            const SizedBox(width: 8),
             Flexible(
               child: Text(info,
-                  style: const TextStyle(overflow: TextOverflow.ellipsis)),
+                  style: const TextStyle(overflow: TextOverflow.clip)),
             ),
           ],
         ),

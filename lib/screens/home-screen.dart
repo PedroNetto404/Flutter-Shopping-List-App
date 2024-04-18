@@ -1,22 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_shopping_list_app/constants/app-route.dart';
+import 'package:mobile_shopping_list_app/screens/listify-progress-screen.dart';
 
+import '../providers/providers.dart';
 import '../widgets/theme-selector.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: false,
-    child: Scaffold(
-        body: Column(
-          children: [
-            Expanded(flex: 1, child: _topSection(context)),
-            Expanded(flex: 2, child: _bottomSection(context)),
-          ],
-        ),
-      ));
+  Widget build(BuildContext context) {
+    final authProvider = context.read<AuthProvider>();
+    if (authProvider.isAuthenticated) {
+      return const ListifyProgressScreen(
+          nextScreenRoute: AppRoute.shoppingList, miliseconds: 1000);
+    }
+
+    return PopScope(
+        canPop: false,
+        child: Scaffold(
+          body: Column(
+            children: [
+              Expanded(flex: 1, child: _topSection(context)),
+              Expanded(flex: 2, child: _bottomSection(context)),
+            ],
+          ),
+        ));
+  }
 
   Widget _topSection(BuildContext context) => Container(
         decoration: const BoxDecoration(
@@ -71,13 +81,13 @@ class HomeScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ElevatedButton.icon(
-            onPressed: () => AppRoute.navigateTo(context, AppRoute.login),
+            onPressed: () => Navigator.of(context).pushNamed(AppRoute.login),
             icon: const Icon(Icons.login),
             label: const Text('Entrar'),
           ),
           const SizedBox(height: 8),
           ElevatedButton.icon(
-            onPressed: () => AppRoute.navigateTo(context, AppRoute.register),
+            onPressed: () => Navigator.of(context).pushNamed(AppRoute.register),
             icon: const Icon(Icons.person_add),
             label: const Text('Cadastrar'),
           ),

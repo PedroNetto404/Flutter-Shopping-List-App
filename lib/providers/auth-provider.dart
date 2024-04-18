@@ -5,15 +5,20 @@ import 'package:flutter/material.dart';
 import '../services/services.dart';
 
 class AuthProvider extends ChangeNotifier {
+
+  AuthProvider() {
+    _authService.authStateChanges.listen((user) {
+      _isAuthenticated = user != null;
+      notifyListeners();
+    });
+
+    _isAuthenticated = _authService.currentUser != null;
+  }
   final AuthService _authService = AuthService();
 
   late bool _isAuthenticated;
 
   User? get currentUser => _authService.currentUser;
-
-  AuthProvider() {
-    _isAuthenticated = _authService.currentUser != null;
-  }
 
   bool get isAuthenticated => _isAuthenticated;
 

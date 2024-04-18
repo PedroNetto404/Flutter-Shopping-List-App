@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
+import 'package:mobile_shopping_list_app/extensions/extensions.dart';
 
 import '../providers/providers.dart';
 import '../widgets/widgets.dart';
@@ -8,7 +10,7 @@ class ShoppingItemDialog extends StatefulWidget {
   final String listId;
   final ShoppingItem? item;
   final Future<void> Function(String name, double quantity, UnitType unitType,
-      String category, String note) onSaveAsync;
+      String category, String note, double? price) onSaveAsync;
 
   bool get _isEditing => item != null;
 
@@ -27,12 +29,18 @@ class ShoppingItemDialog extends StatefulWidget {
 }
 
 class ShoppingItemDialogState extends State<ShoppingItemDialog> {
+  final _priceController = TextEditingController(text: '1');
   final _nameController = TextEditingController();
   final _quantityController = TextEditingController(text: '1.000');
   final _noteController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   UnitType _selectedUnit = UnitType.un;
   String _selectedCategory = '';
+  double? currentItemPrice = 0;
+  double currentItemQuantity = 0;
+
+  double? get itemTotalPrice =>
+      currentItemPrice == null ? null : currentItemPrice! * currentItemQuantity;
 
   @override
   void initState() {
@@ -43,50 +51,80 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
     final item = widget.item!;
 
     _nameController.text = item.name;
-    _quantityController.text = item.quantity.toString();
     _selectedCategory = item.category;
     _selectedUnit = item.unityType;
     _noteController.text = item.note ?? '';
+
+    currentItemPrice = item.price;
+    currentItemQuantity = item.quantity;
+
+    _priceController.text = item.price?.toString() ?? '';
+    _priceController.addListener(_onNumberChanged);
+
+    _quantityController.text = item.quantity.toString();
+    _quantityController.addListener(_onNumberChanged);
   }
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(widget._isEditing ? Icons.edit : Icons.add),
-            const SizedBox(width: 8),
-            Text(widget._isEditing ? 'Editar item' : 'Adicionar item'),
-          ],
-        ),
+        title: _title(),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancelar'),
           ),
           OutlinedButton(
-            onPressed: () {
-              _onSavedPressed(context);
-              Navigator.pop(context);
-            },
+            onPressed: _onSavedPressed,
             child: const Text("Salvar"),
           ),
         ],
-        content: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.9,
-          child: SingleChildScrollView(
-            child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    _nameField(),
-                    _categoryField(),
-                    _quantityField(),
-                    _unitType(),
-                    _noteField(),
-                  ],
-                )),
-          ),
+        content: SingleChildScrollView(
+          child: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.9, child: _body()),
         ),
+      );
+
+  Widget _body() => Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            _nameField(),
+            _categoryField(),
+            _unitType(),
+            NumberField(
+                controller: _quantityController,
+                precision: 3,
+                label: 'Quantidade',
+                hint: 'Digite a quantidade do item',
+                initialValue: currentItemQuantity),
+            if (widget._isEditing && currentItemPrice != null)
+              NumberField(
+                  controller: _priceController,
+                  precision: 2,
+                  label: 'Preço',
+                  hint: 'Digite o preço do item',
+                  numberSymbol: 'R\$ ',
+                  initialValue: currentItemPrice),
+            _noteField()
+          ],
+        ),
+      );
+
+  Widget _title() => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(children: [
+            Icon(widget._isEditing ? Icons.edit : Icons.add),
+            const SizedBox(width: 8),
+            Text(widget._isEditing ? 'Editar item' : 'Adicionar item')
+          ]),
+          if (itemTotalPrice != null && widget._isEditing)
+            Text(' - Total: ${itemTotalPrice!.toCurrency()}',
+                style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey,
+                    overflow: TextOverflow.ellipsis))
+        ],
       );
 
   Widget _nameField() {
@@ -112,6 +150,7 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
   Widget _categoryField() => Selector<ShoppingListProvider, List<String>>(
       builder: (BuildContext context, List<String> categories, Widget? child) =>
           Autocomplete(
+              optionsViewBuilder: _buildCategoryOptions,
               initialValue: TextEditingValue(text: _selectedCategory),
               optionsBuilder: (textEditingValue) {
                 if (textEditingValue.text.isEmpty) return categories;
@@ -121,23 +160,9 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
                         element.toLowerCase().contains(textEditingValue.text))
                     .toList();
               },
-              onSelected: (String value) => setState(() => _selectedCategory = value),
-              fieldViewBuilder: (context, controller, focusNode,
-                      onFieldSubmitted) =>
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextFormField(
-                      controller: controller,
-                      onChanged: (value) => setState(() => _selectedCategory = value),
-                      focusNode: focusNode,
-                      keyboardType: TextInputType.text,
-                      decoration: const InputDecoration(
-                        labelText: 'Categoria',
-                        hintText: 'Digite a categoria do item',
-                        prefixIcon: Icon(Icons.category),
-                      ),
-                    ),
-                  )),
+              onSelected: (String value) =>
+                  setState(() => _selectedCategory = value),
+              fieldViewBuilder: _buildCategoryFormField),
       selector: (context, provider) => provider.lists
           .firstWhere((element) => element.id == widget.listId)
           .items
@@ -145,47 +170,44 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
           .toSet()
           .toList());
 
-  Widget _quantityField() => Padding(
+  Widget _buildCategoryOptions(BuildContext ontext, Function(String) onSelected,
+          Iterable<String> options) =>
+      Align(
+        alignment: Alignment.topLeft,
+        child: Material(
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.68,
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              itemCount: options.length,
+              itemBuilder: (context, index) {
+                final option = options.elementAt(index);
+                return ListTile(
+                  title: Text(option),
+                  onTap: () => onSelected(option),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+  Widget _buildCategoryFormField(
+          context, controller, focusNode, onFieldSubmitted) =>
+      Padding(
         padding: const EdgeInsets.all(8.0),
         child: TextFormField(
-          controller: _quantityController,
-          keyboardType: TextInputType.number,
-          onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Quantidade é obrigatória';
-            }
-
-            final quantity = double.tryParse(value);
-            if (quantity == null) return 'Quantidade inválida';
-
-            if (quantity <= 0) return 'Quantidade deve ser maior que zero';
-
-            return null;
-          },
-          autovalidateMode: AutovalidateMode.onUserInteraction,
+          controller: controller,
+          onChanged: (value) => setState(() => _selectedCategory = value),
+          focusNode: focusNode,
+          keyboardType: TextInputType.text,
           textInputAction: TextInputAction.next,
-          decoration: InputDecoration(
-              labelText: 'Quantidade',
-              hintText: 'Digite a quantidade do item',
-              prefixIcon: const Icon(Icons.format_list_numbered),
-              suffixIcon: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircleButton(
-                        icon: const Icon(Icons.remove),
-                        color: Colors.red,
-                        onPressed: _onDecrement),
-                    const SizedBox(width: 8),
-                    CircleButton(
-                        icon: const Icon(Icons.add),
-                        color: Colors.green,
-                        onPressed: _onIncrement),
-                  ],
-                ),
-              )),
+          decoration: const InputDecoration(
+            labelText: 'Categoria',
+            hintText: 'Digite a categoria do item',
+            prefixIcon: Icon(Icons.category),
+          ),
         ),
       );
 
@@ -201,7 +223,7 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
         child: TextFormField(
           onFieldSubmitted: (_) {
             FocusScope.of(context).unfocus();
-            _onSavedPressed(context);
+            _onSavedPressed();
           },
           controller: _noteController,
           keyboardType: TextInputType.text,
@@ -214,26 +236,23 @@ class ShoppingItemDialogState extends State<ShoppingItemDialog> {
         ),
       );
 
-  void _onSavedPressed(BuildContext context) {
+  void _onSavedPressed() async {
     if (!_formKey.currentState!.validate()) return;
 
     final name = _nameController.text.trim();
-    final quantity = double.tryParse(_quantityController.text) ?? 1;
+    final quantity = double.tryParse(_quantityController.text) ?? 0;
     final category = _selectedCategory;
     final note = _noteController.text.trim();
+    final price = double.tryParse(_priceController.text);
 
-    widget.onSaveAsync(name, quantity, _selectedUnit, category, note);
+    await widget.onSaveAsync(
+        name, quantity, _selectedUnit, category, note, price);
+
+    if (!mounted) return;
   }
 
-  void _onIncrement() {
-    final value = (double.tryParse(_quantityController.text) ?? 0) + 1;
-    _quantityController.text = value.toStringAsFixed(3);
-  }
-
-  void _onDecrement() {
-    final value = (double.tryParse(_quantityController.text) ?? 0) - 1;
-    if (value == 0) return;
-
-    _quantityController.text = value.toStringAsFixed(3);
-  }
+  void _onNumberChanged() => setState(() {
+        currentItemPrice = double.tryParse(_priceController.text);
+        currentItemQuantity = double.tryParse(_quantityController.text) ?? 0;
+      });
 }

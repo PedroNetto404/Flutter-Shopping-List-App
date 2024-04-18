@@ -2,10 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-import '../constants/constants.dart';
-
 class ListifyProgressScreen extends StatefulWidget {
-  final AppRoute nextScreenRoute;
+  final String nextScreenRoute;
   final int miliseconds;
 
   const ListifyProgressScreen(
@@ -24,8 +22,8 @@ class _ListifyProgressScreenState extends State<ListifyProgressScreen> {
 
     _timer = Timer(
         Duration(milliseconds: widget.miliseconds),
-        () => Navigator.of(context)
-            .pushReplacementNamed(widget.nextScreenRoute.value));
+        () =>
+            Navigator.of(context).pushReplacementNamed(widget.nextScreenRoute));
   }
 
   @override
@@ -35,19 +33,19 @@ class _ListifyProgressScreenState extends State<ListifyProgressScreen> {
   }
 
   @override
-  Widget build(BuildContext context) =>  const Scaffold(
+  Widget build(BuildContext context) => const Scaffold(
           body: Center(
               child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                          Padding(
-                            padding: EdgeInsets.only(right: 25),
-                            child: Icon(FontAwesomeIcons.cartShopping, size: 100),
-                          ),
-                          SizedBox(height: 40),
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text('Carregando...')
-                        ])));
+            Padding(
+              padding: EdgeInsets.only(right: 25),
+              child: Icon(FontAwesomeIcons.cartShopping, size: 100),
+            ),
+            SizedBox(height: 40),
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Carregando...')
+          ])));
 }

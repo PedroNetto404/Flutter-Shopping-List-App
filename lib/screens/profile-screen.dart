@@ -1,10 +1,9 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:mobile_shopping_list_app/extensions/extensions.dart';
 
 import '../providers/providers.dart';
-import '../widgets/widgets.dart';
+import '../widgets/layout.dart';
 import '../constants/constants.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -27,10 +26,10 @@ class ProfileScreen extends StatelessWidget {
         final pictureUrl = provider.currentUser!.photoURL;
 
         return GestureDetector(
-          onTap: () => _goToTakePictureScreen(context, provider),
+          onTap: () => _goToTakePictureScreen(context),
           child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.5,
-              height: MediaQuery.of(context).size.width * 0.5,
+              width: 200,
+              height: 200,
               child: Container(
                   decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -44,10 +43,10 @@ class ProfileScreen extends StatelessWidget {
                       backgroundColor: Colors.transparent,
                       child: Center(
                           child: Icon(
-                            color: Theme.of(context).colorScheme.primary,
-                            pictureUrl != null
-                              ? FontAwesomeIcons.penToSquare
-                              : FontAwesomeIcons.camera))))),
+                              color: Theme.of(context).colorScheme.primary,
+                              pictureUrl != null
+                                  ? FontAwesomeIcons.penToSquare
+                                  : FontAwesomeIcons.camera))))),
         );
       });
 
@@ -74,37 +73,22 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _goToTakePictureScreen(
-          BuildContext context, AuthProvider authProvider) =>
-      AppRoute.navigateTo(context, AppRoute.takePicture,
-          arguments: (imageBytes) =>
-              _handleImageBytes(context, authProvider, imageBytes));
+  void _goToTakePictureScreen(BuildContext context) =>
+      Navigator.pushNamed(context, AppRoute.takePicture,
+          arguments: (fileBytes) async {
+        final authProvider = context.read<AuthProvider>();
 
-  Future<void> _handleImageBytes(
-      BuildContext context, AuthProvider authProvider, Uint8List bytes) async {
-    try {
-      await authProvider.updateProfilePicture(bytes);
-    } catch (e) {
-      if (!context.mounted) return;
+        try {
+          await authProvider.updateProfilePicture(fileBytes);
 
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Row(children: [
-        Icon(FontAwesomeIcons.bug),
-        SizedBox(width: 8),
-        Text(
-            'Ops... ocorreu um erro ao atualizar a foto de perfil. Tente novamente mais tarde.')
-      ])));
-    } finally {
-      if (context.mounted) {
-        Navigator.of(context).pop();
+          if (!context.mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Row(children: [
-          Icon(FontAwesomeIcons.circleCheck),
-          SizedBox(width: 8),
-          Text('Foto de perfil atualizada com sucesso!')
-        ])));
-      }
-    }
-  }
+          ScaffoldMessenger.of(context).showSuccessSnackBar(
+              'Foto ${authProvider.currentUser?.photoURL != null ? 'atualizada' : 'adicionada'} com sucesso!');
+        } catch (e) {
+          if (!context.mounted) return;
+
+          ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(e);
+        }
+      });
 }

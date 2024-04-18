@@ -1,44 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:mobile_shopping_list_app/screens/listify-progress-screen.dart';
 
-import '../providers/providers.dart';
 import '../constants/constants.dart';
-import '../widgets/widgets.dart';
+import '../extensions/extensions.dart';
+import '../providers/providers.dart';
+import 'widgets.dart';
 
 class Layout extends StatelessWidget {
   final Widget body;
   final Widget? floatingActionButton;
 
-  const Layout({super.key, required this.body, this.floatingActionButton});
-
-  static const Map<AppRoute, (int, String, String, IconData)> _bottomBarMap = {
-    AppRoute.about: (0, 'Sobre', 'Sobre o app', Icons.info),
-    AppRoute.shoppingList: (
-      1,
-      'Listas',
-      'Minhas lista de compras',
-      Icons.shopping_cart
-    ),
-    AppRoute.profile: (2, 'Perfil', 'Meu perfil', Icons.account_circle)
+  final _routeMap = {
+    AppRoute.about: 0,
+    AppRoute.shoppingList: 1,
+    AppRoute.profile: 2
   };
 
+  Layout({super.key, required this.body, this.floatingActionButton});
+
   @override
-  Widget build(BuildContext context) =>
-      Consumer<AuthProvider>(builder: (context, provider, child) {
-        if (!provider.isAuthenticated) {
+  Widget build(BuildContext context) => Consumer<AuthProvider>(
+          builder: (BuildContext context, AuthProvider value, Widget? child) {
+        if (!value.isAuthenticated) {
           return const ListifyProgressScreen(
               nextScreenRoute: AppRoute.home, miliseconds: 3000);
         }
 
         return Scaffold(
-            appBar: _appBar(context, provider),
+            appBar: _appBar(context),
             body: body,
+            bottomNavigationBar: _bottomNavigationBar(context),
             floatingActionButton: floatingActionButton,
-            bottomNavigationBar: _bottomNavigationBar(context));
+            floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat);
       });
 
-  PreferredSizeWidget _appBar(BuildContext context, AuthProvider provider) =>
-      AppBar(
+  AppBar _appBar(BuildContext context) => AppBar(
         automaticallyImplyLeading: false,
         title: Row(
           children: [
@@ -56,46 +53,48 @@ class Layout extends StatelessWidget {
           const ThemeSelector(),
           IconButton(
               icon: const Icon(Icons.exit_to_app),
-              onPressed: () => _onSignOutPressed(context, provider)),
+              onPressed: () async {
+                try {
+                  final provider = context.read<AuthProvider>();
+                  await provider.signOut();
+
+                  if (!context.mounted) return;
+
+                  Navigator.of(context).pushNamedWithLoading(AppRoute.home, canPopAll: true); 
+                } catch (e) {
+                  if (!context.mounted) return;
+
+                  ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(e);
+                }
+              }),
           const SizedBox(width: 8),
         ],
       );
 
   Widget _bottomNavigationBar(BuildContext context) => BottomNavigationBar(
-        selectedFontSize: 16,
-        unselectedFontSize: 12,
-        currentIndex: _getCurrentTabInfo(context),
-        items: _bottomBarMap.entries.map((entry) {
-          final (_, label, tooltip, icon) = entry.value;
-          return BottomNavigationBarItem(
-              label: label, tooltip: tooltip, icon: Icon(icon));
-        }).toList(),
-        onTap: (index) => _onBottonIconTap(index, context),
-      );
+          currentIndex: _getCurrentIndex(context),
+          onTap: (index) {
+            if (index == _getCurrentIndex(context)) return;
 
-  void _onBottonIconTap(int newTabIndex, BuildContext context) {
-    final currentTabIndex = _getCurrentTabInfo(context);
-    if (currentTabIndex == newTabIndex) return;
+            final newRoute = _routeMap.keys.firstWhere(
+                (key) => _routeMap[key] == index,
+                orElse: () => AppRoute.shoppingList);
 
-    final newTabRoute = _bottomBarMap.entries
-        .firstWhere((entry) => entry.value.$1 == newTabIndex)
-        .key;
+            Navigator.of(context).pushNamed(newRoute);
+          },
+          selectedIconTheme: IconThemeData(
+              size: 40, color: Theme.of(context).colorScheme.primary),
+          unselectedIconTheme: IconThemeData(
+              size: 24, color: Theme.of(context).colorScheme.secondary),
+          items: const [
+            BottomNavigationBarItem(
+                icon: Icon(FontAwesomeIcons.circleInfo), label: 'Sobre'),
+            BottomNavigationBarItem(
+                icon: Icon(FontAwesomeIcons.listCheck), label: 'Listas'),
+            BottomNavigationBarItem(
+                icon: Icon(FontAwesomeIcons.person), label: 'Perfil'),
+          ]);
 
-    AppRoute.navigateTo(context, newTabRoute);
-  }
-
-  int _getCurrentTabInfo(BuildContext context) => _bottomBarMap.entries
-      .firstWhere(
-          (entry) => entry.key.value == ModalRoute.of(context)!.settings.name,
-          orElse: (() => _bottomBarMap.entries.elementAt(1)))
-      .value
-      .$1;
-
-  void _onSignOutPressed(BuildContext context, AuthProvider provider) =>
-      provider.signOut().catchError((_) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text(
-                'Não foi possível sair da sua conta. Tente novamente mais tarde.'),
-            backgroundColor: Colors.redAccent));
-      });
+  int _getCurrentIndex(BuildContext context) =>
+      _routeMap[ModalRoute.of(context)!.settings.name]!;
 }

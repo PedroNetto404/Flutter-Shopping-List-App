@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mobile_shopping_list_app/extensions/string-extensions.dart';
 
 import '../providers/providers.dart';
+import '../widgets/purchase-item-dialog.dart';
 import '../widgets/widgets.dart';
 import '../models/models.dart';
+import '../extensions/extensions.dart';
 
 
 class ShoppingListDetailsScreen extends StatefulWidget {
@@ -17,90 +18,89 @@ class ShoppingListDetailsScreen extends StatefulWidget {
 class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
   String _searchText = '';
   String _selectedCategory = 'Todas';
-
-  List<ShoppingItem> _getFilteredListItems(ShoppingList list) {
-    var listItems = list.items.where((item) {
-      bool pass = true;
-      if (_searchText.isNotEmpty) {
-        pass = pass &&
-            item.name.toLowerCase().contains(_searchText.trim().toLowerCase());
-      }
-
-      if (_selectedCategory != 'Todas') {
-        pass = pass && item.category == _selectedCategory;
-      }
-
-      return pass;
-    }).toList();
-
-    listItems.sort((a, b) => a.name.compareTo(b.name));
-    listItems.sort((a, b) => a.purchased ? 1 : -1);
-
-    return listItems;
-  }
+  bool _showPurchasedItems = false;
 
   @override
-  Widget build(BuildContext context) {
-    final listId = ModalRoute.of(context)!.settings.arguments as String;
+  Widget build(BuildContext context) => Scaffold(
+      appBar: AppBar(title: const Text('Detalhes da Lista')),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            final listId = ModalRoute.of(context)!.settings.arguments as String;
+            _onCreateItemPressed(listId);
+          },
+          child: const Icon(Icons.add_shopping_cart_sharp)),
+      body: Consumer<ShoppingListProvider>(builder:
+          (BuildContext context, ShoppingListProvider value, Widget? child) {
+        final listId = ModalRoute.of(context)!.settings.arguments as String;
 
-    return Scaffold(
-        appBar: AppBar(title: const Text('Detalhes da Lista')),
-        floatingActionButton: FloatingActionButton(
-            onPressed: () => _onItemCreateButtonPressed(context, listId),
-            child: const Icon(Icons.add_shopping_cart_sharp)),
-        body:
-            Selector<ShoppingListProvider, (ShoppingList, List<ShoppingItem>)>(
-          builder: (BuildContext context,
-              (ShoppingList, List<ShoppingItem>) data, Widget? child) {
-            final (list, filteredItems) = data;
+        final list = value.getList(listId);
+        if (list.isEmpty) {
+          return EmptyBanner(
+            onTap: () => _onCreateItemPressed(listId),
+            message: 'Lista vazia! Adicione um item para começar.',
+            icon: Icons.shopping_cart,
+          );
+        }
 
-            return list.items.isEmpty
-                ? _emptyListMessage()
-                : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+        final filteredItems = _getFilteredListItems(list);
+
+        return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                _topSection(list),
+                const SizedBox(height: 8),
+                Expanded(
                     child: Column(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        _topSection(list),
-                        const SizedBox(height: 8),
-                        Expanded(
-                            child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _infoSection(list),
-                            Expanded(
-                                child: ListView.builder(
-                                    itemCount: filteredItems.length,
-                                    itemBuilder: (context, index) {
-                                      final item = filteredItems[index];
+                  mainAxisSize: MainAxisSize.max,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _infoSection(list),
+                    Expanded(
+                        child: ListView.builder(
+                            itemCount: filteredItems.length,
+                            itemBuilder: (context, index) {
+                              final item = filteredItems[index];
 
-                                      return ShoppingItemCard(
-                                        listId: listId,
-                                        item: item,
-                                        onDeletePressed: () => _onDeletePressed(
-                                            context, item, listId),
-                                        onMarkPurchaseChange: (_) =>
-                                            _onTogglePurchasePressed(
-                                                context, listId, item),
-                                        onEditPressed: () => _onEditPressed(
-                                            context, item, listId),
-                                      );
-                                    })),
-                          ],
-                        ))
-                      ],
-                    ),
-                  );
-          },
-          selector: (context, provider) {
-            final list = provider.getList(listId);
-            final filteredItems = _getFilteredListItems(list);
+                              return ShoppingItemCard(
+                                listId: list.id,
+                                item: item,
+                                onDeletePressed: () => _onDeletePressed(item),
+                                onEditPressed: () => _onEditPressed(item),
+                                onBuyPressed: () => _onBuyPressed(item),
+                              );
+                            })),
+                  ],
+                ))
+              ],
+            ));
+      }));
 
-            return (list, filteredItems);
-          },
-        ));
+  void _onBuyPressed(ShoppingItem item) async {
+    await showDialog(
+      context: context,
+      builder: (_) => PurchaseItemDialog(
+        item: item,
+        onPurchase: (price, quantity) async {
+          final provider = context.read<ShoppingListProvider>();
+
+          try {
+            await provider.buyItem(item, price, quantity);
+            ScaffoldMessenger.of(context).showSuccessSnackBar(
+                'Item "${item.name}" comprado com sucesso!');
+
+            if (provider.getList(item.listId).completed) {
+              _showFeedbackIfListCompleted(item.listId);
+              setState(() => _showPurchasedItems = true);
+            }
+          } catch (e) {
+            ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(e);
+          }
+        },
+      ),
+    );
   }
 
   Widget _topSection(ShoppingList list) => Card(
@@ -111,74 +111,88 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.only(top: 16, left: 16),
-                child: Text(
-                  "🛍️ ${list.name.capitalize()}",
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "🛍️ ${list.name}",
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (list.totalPrice != null)
+                      Text('Total: ${list.totalPrice!.toCurrency()}',
+                          style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue)),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              _filterSection(list),
               const SizedBox(height: 8),
-              if (list.items.isNotEmpty)
-                Row(
-                  children: [
-                    Checkbox(
-                        value: list.completed,
-                        onChanged: (value) =>
-                            _onMarkAllItemsChange(value!, list.id)),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                        onTap: () =>
-                            _onMarkAllItemsChange(!list.completed, list.id),
-                        child: Text(
-                            'Marcar todos os itens como ${list.completed ? 'pendentes' : 'comprados'}')),
-                  ],
-                )
+              _filterSection(list),
             ],
           ),
         ),
       );
 
-  Widget _filterSection(ShoppingList list) => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        mainAxisSize: MainAxisSize.max,
+  Widget _filterSection(ShoppingList list) => Column(
         children: [
-          Expanded(
-            flex: 3,
-            child: TextFormField(
-              decoration: const InputDecoration(
-                hintText: 'Digite o nome do item',
-                labelText: 'Nome',
-                prefixIcon: Icon(Icons.search),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextFormField(
+                  decoration: const InputDecoration(
+                    hintText: 'Digite o nome do item',
+                    labelText: 'Nome',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                  onChanged: _onSearchChange,
+                ),
               ),
-              onChanged: _onSearchChange,
-            ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 1,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Categoria'),
+                    DropdownButton<String>(
+                      value: _selectedCategory,
+                      isExpanded: true,
+                      onChanged: _onCategoryChange,
+                      items: _getCategories(list.items)
+                          .map((e) => DropdownMenuItem<String>(
+                                value: e,
+                                child: Text(e),
+                              ))
+                          .toList(),
+                    ),
+                  ],
+                ),
+              )
+            ],
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 1,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                const Text('Categoria'),
-                DropdownButton<String>(
-                  value: _selectedCategory,
-                  isExpanded: true,
-                  onChanged: _onCategoryChange,
-                  items: _getCategories(list.items)
-                      .map((e) => DropdownMenuItem<String>(
-                            value: e,
-                            child: Text(e.capitalize()),
-                          ))
-                      .toList(),
+                const Text('Mostrar itens comprados'),
+                const SizedBox(width: 4),
+                Switch(
+                  value: _showPurchasedItems,
+                  onChanged: (value) =>
+                      setState(() => _showPurchasedItems = value),
                 ),
               ],
             ),
-          )
+          ),
         ],
       );
 
@@ -205,17 +219,6 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
         ),
       );
 
-  Widget _emptyListMessage() => const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.shopping_cart, size: 100),
-            SizedBox(height: 16),
-            Text('Lista vazia...'),
-          ],
-        ),
-      );
-
   List<String> _getCategories(List<ShoppingItem> items) => [
         'Todas',
         ...items
@@ -224,19 +227,29 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
             .toSet()
       ];
 
-  void _onMarkAllItemsChange(bool value, String listId) {
-    var provider = context.read<ShoppingListProvider>();
+  List<ShoppingItem> _getFilteredListItems(ShoppingList list) {
+    var listItems = list.items.where((item) {
+      bool pass = true;
 
-    if (value) {
-      provider.completeShoppingList(listId);
-      showDialog(
-          context: context,
-          builder: (context) =>
-              ListCompletedDialog(listName: provider.getList(listId).name));
-      return;
-    }
+      pass = pass && (item.purchased == _showPurchasedItems);
+      pass = pass &&
+          (_searchText.isNotEmpty
+              ? item.name
+                  .toLowerCase()
+                  .contains(_searchText.trim().toLowerCase())
+              : true);
+      pass = pass &&
+          (_selectedCategory != 'Todas'
+              ? item.category == _selectedCategory
+              : true);
 
-    provider.resetShoppingList(listId);
+      return pass;
+    }).toList();
+
+    listItems.sort((a, b) => a.name.compareTo(b.name));
+    listItems.sort((a, b) => a.purchased ? 1 : -1);
+
+    return listItems;
   }
 
   void _onCategoryChange(String? value) =>
@@ -244,94 +257,96 @@ class _ShoppingListDetailsScreenState extends State<ShoppingListDetailsScreen> {
 
   void _onSearchChange(String value) => setState(() => _searchText = value);
 
-  void _onDeletePressed(
-          BuildContext context, ShoppingItem item, String listId) =>
-      showDialog(
-          context: context,
-          builder: (context) => DeleteConfirmationDialog(
-              title: const Row(children: [
-                Icon(Icons.warning, color: Colors.red),
-                SizedBox(width: 8),
-                Text('Remover Item')
-              ]),
-              content: Row(
-                children: [
-                  const Text('Tem certeza que seja remover o item '),
-                  Text(item.name.capitalize(),
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.blue)),
-                  const Text('?')
-                ]
-              ),
-              onConfirm: () => _onDeleteConfirmed(context, item, listId)));
+  void _onDeletePressed(ShoppingItem item) => showDialog(
+      context: context,
+      builder: (context) => DeleteConfirmationDialog(
+          title: const Row(children: [
+            Icon(Icons.warning, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Remover Item')
+          ]),
+          content: Text('Tem certeza que seja remover o item "${item.name}?"'),
+          onConfirm: () => _onDeleteConfirmed(item)));
 
-  void _onDeleteConfirmed(
-          BuildContext context, ShoppingItem item, String listId) =>
-      context
-          .read<ShoppingListProvider>()
-          .removeItemFromShoppingList(listId: listId, itemName: item.name)
-          .catchError((error) => ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text('Erro ao remover item: $error'),
-                  backgroundColor: Colors.red)));
+  void _onDeleteConfirmed(ShoppingItem item) async {
+    final provider = context.read<ShoppingListProvider>();
 
-  void _onItemCreateButtonPressed(BuildContext context, String listId) =>
-      showDialog(
-          context: context,
-          builder: (context) => ShoppingItemDialog.createItem(
-                listId: listId,
-                onSaveAsync: (String name, double quantity, UnitType unitType,
-                        String category, String note) =>
-                    context
-                        .read<ShoppingListProvider>()
-                        .addItemToShoppingList(
-                            listId: listId,
-                            name: name,
-                            quantity: quantity,
-                            unityType: unitType,
-                            category: category,
-                            note: note)
-                        .catchError((error) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('Erro ao adicionar item: $error'),
-                      backgroundColor: Colors.red));
-                }),
-              ));
+    try {
+      await provider.removeItemFromShoppingList(item);
 
-  void _onEditPressed(BuildContext context, ShoppingItem item, String listId) =>
-      showDialog(
-          context: context,
-          builder: (context) => ShoppingItemDialog.updateItem(
-              listId: listId,
-              item: item,
-              onSaveAsync: (String name, double quantity, UnitType unitType,
-                      String category, String note) =>
-                  context
-                      .read<ShoppingListProvider>()
-                      .updateShoppingItem(
-                          listId: listId,
-                          previousItemName: item.name,
-                          newName: name,
-                          newQuantity: quantity,
-                          newCategory: category,
-                          newNote: note,
-                          newUnitType: unitType)
-                      .catchError((erro) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('Erro ao atualizar item: $erro'),
-                        backgroundColor: Colors.red));
-                  })));
+      ScaffoldMessenger.of(context)
+          .showSuccessSnackBar('Item "${item.name}" removido com sucesso!');
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(error);
+    }
+  }
 
-  void _onTogglePurchasePressed(
-      BuildContext context, String listId, ShoppingItem item) {
-    var provider = context.read<ShoppingListProvider>();
-    provider.toggleItemPurchase(listId, item.name);
+  void _onCreateItemPressed(String listId) => showDialog(
+      context: context,
+      builder: (_) => ShoppingItemDialog.createItem(
+            listId: listId,
+            onSaveAsync: (String name, double quantity, UnitType unitType,
+                String category, String note, double? _) async {
+              final provider = context.read<ShoppingListProvider>();
 
-    if (provider.getList(listId).completed) {
-      showDialog(
-          context: context,
-          builder: (context) =>
-              ListCompletedDialog(listName: provider.getList(listId).name));
+              try {
+                await provider.addItemToShoppingList(
+                    listId: listId,
+                    name: name,
+                    quantity: quantity,
+                    unityType: unitType,
+                    category: category,
+                    note: note);
+
+                if (!mounted) return;
+
+                ScaffoldMessenger.of(context)
+                    .showSuccessSnackBar('Item "$name" adicionado com sucesso!');
+
+                Navigator.of(context).pop();
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(e);
+              }
+            },
+          ));
+
+  void _onEditPressed(ShoppingItem item) => showDialog(
+      context: context,
+      builder: (_) => ShoppingItemDialog.updateItem(
+          listId: item.listId,
+          item: item,
+          onSaveAsync: (String name, double quantity, UnitType unitType,
+              String category, String note, double? price) async {
+            final provider = context.read<ShoppingListProvider>();
+
+            try {
+              await provider.updateShoppingItem(
+                  listId: item.listId,
+                  previousItemName: item.name,
+                  newName: name,
+                  newQuantity: quantity,
+                  newCategory: category,
+                  newNote: note,
+                  newUnitType: unitType,
+                  newPrice: price);
+
+              if (!mounted) return;
+
+              ScaffoldMessenger.of(context).showSuccessSnackBar(
+                  'Item "${item.name}" atualizado com sucesso!');
+            } catch (e) {
+              ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(e);
+            }
+          }));
+
+  void _showFeedbackIfListCompleted(String listId) {
+    final list = context.read<ShoppingListProvider>().getList(listId);
+
+    if (list.completed) {
+      ScaffoldMessenger.of(context)
+          .showSuccessSnackBar('Lista "${list.name}" finalizada!');
     }
   }
 }

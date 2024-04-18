@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_shopping_list_app/extensions/extensions.dart';
 
 import '../constants/constants.dart';
 import '../providers/providers.dart';
@@ -20,27 +21,31 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           title: const Text('Esqueci minha senha'),
         ),
         body: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.symmetric(horizontal: 16),
           child: Center(
             child: _SendEmailForm(
                 emailController: _emailController,
-                onSendEmailPressed: () => _onSendEmailPressed(context)),
+                onSendEmailPressed: () => _onSendEmailPressed()),
           ),
         ),
       );
 
-  void _onSendEmailPressed(BuildContext context) => context
-      .read<AuthProvider>()
-      .sendPasswordResetEmail(_emailController.text)
-      .then((value) => _showSuccessDialog(context))
-      .catchError((_) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content:
-                const Text('Erro ao enviar email de redefinição de senha.'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          )));
+  void _onSendEmailPressed() async {
+    final provider = context.read<AuthProvider>();
 
-  void _showSuccessDialog(BuildContext context) => showDialog(
-      context: context, builder: (context) => const _SuccessEmailSentDialog());
+    try {
+      await provider.sendPasswordResetEmail(_emailController.text);
+
+      if (!mounted) return;
+
+      showDialog(
+          context: context,
+          builder: (context) => const _SuccessEmailSentDialog());
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showUnexpectedErrorSnackBar(e);
+    }
+  }
 }
 
 class _SendEmailForm extends StatelessWidget {
@@ -100,13 +105,11 @@ class _SuccessEmailSentDialog extends StatelessWidget {
         ),
         content: const Text(
           'Verifique sua caixa de entrada e siga as instruções para recuperar sua senha.',
+          
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              AppRoute.navigateTo(context, AppRoute.login);
-            },
+            onPressed: () => Navigator.popAndPushNamed(context, AppRoute.login),
             child: const Text('OK'),
           ),
         ],

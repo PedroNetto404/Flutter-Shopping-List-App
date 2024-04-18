@@ -9,13 +9,18 @@ environment:
 dependencies:
   camera: ^0.10.5+9
   cloud_firestore: ^4.16.0
+  file_saver: ^0.2.12
   firebase_auth: ^4.19.0
   firebase_core: ^2.28.0
   firebase_storage: ^11.7.1
   flutter:
     sdk: flutter
+  flutter_masked_text2: ^0.9.1
   font_awesome_flutter: ^10.7.0
   google_sign_in: ^6.2.1
+  open_file: ^3.3.2
+  pdf: ^3.10.8
+  permission_handler: ^11.3.1
   provider: ^6.1.2
 
 dev_dependencies:
